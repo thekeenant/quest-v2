@@ -1,7 +1,7 @@
 package net.avicus.quest.query.delete;
 
 import net.avicus.quest.Param;
-import net.avicus.quest.ParamString;
+import net.avicus.quest.ParameterizedString;
 import net.avicus.quest.parameter.DirectionalParam;
 import net.avicus.quest.parameter.FieldParam;
 import net.avicus.quest.query.Query;
@@ -77,18 +77,18 @@ public class Delete implements Query<DeleteResult, DeleteConfig>, Filterable<Del
         return update;
     }
 
-    public ParamString build() {
+    public ParameterizedString build() {
         StringBuilder sb = new StringBuilder();
         List<Param> parameters = new ArrayList<>();
 
         sb.append("DELETE FROM ");
 
-        sb.append(this.table.getKey());
+        sb.append(this.table.getParamString());
         parameters.add(this.table);
 
         if (this.filter != null) {
             sb.append(" WHERE ");
-            ParamString filterString = this.filter.build();
+            ParameterizedString filterString = this.filter.build();
             sb.append(filterString.getSql());
             parameters.addAll(filterString.getParameters());
         }
@@ -96,24 +96,24 @@ public class Delete implements Query<DeleteResult, DeleteConfig>, Filterable<Del
         if (this.order != null) {
             sb.append(" ORDER BY ");
             for (DirectionalParam order : this.order) {
-                sb.append(order.getKey());
+                sb.append(order.getParamString());
                 parameters.add(order);
             }
         }
 
         if (this.limit != null) {
             sb.append(" LIMIT ");
-            sb.append(this.limit.getKey());
+            sb.append(this.limit.getParamString());
             parameters.add(this.limit);
         }
 
-        return new ParamString(sb.toString(), parameters);
+        return new ParameterizedString(sb.toString(), parameters);
     }
 
     @Override
     public DeleteResult execute(Optional<DeleteConfig> config) throws DatabaseException {
         // The query
-        ParamString query = build();
+        ParameterizedString query = build();
 
         // Create statement
         PreparedStatement statement = config.orElse(DeleteConfig.DEFAULT).createStatement(this.database, query.getSql());

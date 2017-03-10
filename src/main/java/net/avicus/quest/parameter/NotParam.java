@@ -12,13 +12,13 @@ public class NotParam implements Param {
     }
 
     @Override
-    public String getKey() {
-        return "NOT " + this.child.getKey();
+    public String getParamString() {
+        return "NOT " + this.child.getParamString();
     }
 
     @Override
-    public List<Object> getObjects() {
-        return this.child.getObjects();
+    public List<Object> getValues() {
+        return this.child.getValues();
     }
 
     @Override

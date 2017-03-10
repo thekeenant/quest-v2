@@ -16,12 +16,12 @@ public class MinParam implements Param {
     }
 
     @Override
-    public String getKey() {
-        return "MIN(" + this.expression.getKey() + ")";
+    public String getParamString() {
+        return "MIN(" + this.expression.getParamString() + ")";
     }
 
-    public List<Object> getObjects() {
-        return this.expression.getObjects();
+    public List<Object> getValues() {
+        return this.expression.getValues();
     }
 
     @Override

@@ -16,12 +16,12 @@ public class SumParam implements Param {
     }
 
     @Override
-    public String getKey() {
-        return "SUM(" + this.expression.getKey() + ")";
+    public String getParamString() {
+        return "SUM(" + this.expression.getParamString() + ")";
     }
 
-    public List<Object> getObjects() {
-        return this.expression.getObjects();
+    public List<Object> getValues() {
+        return this.expression.getValues();
     }
 
     @Override

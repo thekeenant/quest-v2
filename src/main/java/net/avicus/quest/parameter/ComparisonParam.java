@@ -26,12 +26,12 @@ public class ComparisonParam implements Param {
     }
 
     @Override
-    public String getKey() {
+    public String getParamString() {
         return this.symbol;
     }
 
     @Override
-    public List<Object> getObjects() {
+    public List<Object> getValues() {
         return Collections.emptyList();
     }
 

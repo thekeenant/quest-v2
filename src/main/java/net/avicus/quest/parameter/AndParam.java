@@ -14,8 +14,8 @@ public class AndParam implements Param {
         this.first = first;
         this.second = second;
         this.values = new ArrayList<>();
-        this.values.addAll(first.getObjects());
-        this.values.addAll(second.getObjects());
+        this.values.addAll(first.getValues());
+        this.values.addAll(second.getValues());
     }
 
     public AndParam(int first, int second) {
@@ -23,11 +23,11 @@ public class AndParam implements Param {
     }
 
     @Override
-    public String getKey() {
-        return "(" + this.first.getKey() + " AND " + this.second.getKey() + ")";
+    public String getParamString() {
+        return "(" + this.first.getParamString() + " AND " + this.second.getParamString() + ")";
     }
 
-    public List<Object> getObjects() {
+    public List<Object> getValues() {
         return this.values;
     }
 

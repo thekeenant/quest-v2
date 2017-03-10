@@ -13,11 +13,11 @@ public class NowParam implements Param {
     }
 
     @Override
-    public String getKey() {
+    public String getParamString() {
         return "NOW()";
     }
 
-    public List<Object> getObjects() {
+    public List<Object> getValues() {
         return Collections.emptyList();
     }
 

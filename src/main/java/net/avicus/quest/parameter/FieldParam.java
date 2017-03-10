@@ -18,7 +18,7 @@ public class FieldParam implements Param {
     }
 
     @Override
-    public String getKey() {
+    public String getParamString() {
         StringBuilder sb = new StringBuilder();
         for (String field : this.fields) {
             // Backticks or double quotes are NOT used intentionally, so as to support SQL standard AND MySQL
@@ -30,7 +30,7 @@ public class FieldParam implements Param {
         return sb.toString();
     }
 
-    public List<Object> getObjects() {
+    public List<Object> getValues() {
         return Collections.emptyList();
     }
 

@@ -14,8 +14,8 @@ public class ModuloParam implements Param {
         this.dividend = dividend;
         this.divisor = divisor;
         this.values = new ArrayList<>();
-        this.values.addAll(dividend.getObjects());
-        this.values.addAll(divisor.getObjects());
+        this.values.addAll(dividend.getValues());
+        this.values.addAll(divisor.getValues());
     }
 
     public ModuloParam(Param dividend, Object divisor) {
@@ -35,11 +35,11 @@ public class ModuloParam implements Param {
     }
 
     @Override
-    public String getKey() {
-        return "(" + this.dividend.getKey() + " % " + this.divisor.getKey() + ")";
+    public String getParamString() {
+        return "(" + this.dividend.getParamString() + " % " + this.divisor.getParamString() + ")";
     }
 
-    public List<Object> getObjects() {
+    public List<Object> getValues() {
         return this.values;
     }
 

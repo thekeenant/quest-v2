@@ -16,12 +16,12 @@ public class UpperParam implements Param {
     }
 
     @Override
-    public String getKey() {
-        return "UPPER(" + this.child.getKey() + ")";
+    public String getParamString() {
+        return "UPPER(" + this.child.getParamString() + ")";
     }
 
-    public List<Object> getObjects() {
-        return this.child.getObjects();
+    public List<Object> getValues() {
+        return this.child.getValues();
     }
 
     @Override

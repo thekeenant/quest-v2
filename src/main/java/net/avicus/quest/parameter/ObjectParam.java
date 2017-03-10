@@ -13,16 +13,16 @@ public class ObjectParam implements Param {
     }
 
     @Override
-    public String getKey() {
+    public String getParamString() {
         return "?";
     }
 
-    public List<Object> getObjects() {
+    public List<Object> getValues() {
         return Collections.singletonList(this.value);
     }
 
     @Override
     public String toString() {
-        return "ObjectParam(key=" + getKey() + ", values=" + getObjects() + ")";
+        return "ObjectParam(key=" + getParamString() + ", values=" + getValues() + ")";
     }
 }

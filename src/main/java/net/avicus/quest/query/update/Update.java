@@ -1,7 +1,7 @@
 package net.avicus.quest.query.update;
 
 import net.avicus.quest.Param;
-import net.avicus.quest.ParamString;
+import net.avicus.quest.ParameterizedString;
 import net.avicus.quest.parameter.DirectionalParam;
 import net.avicus.quest.parameter.ObjectParam;
 import net.avicus.quest.query.Query;
@@ -91,7 +91,7 @@ public class Update implements Query<UpdateResult, UpdateConfig>, Filterable<Upd
         return update;
     }
 
-    public ParamString build() {
+    public ParameterizedString build() {
         if (this.changes.isEmpty()) {
             throw new DatabaseException("No changes to be made.");
         }
@@ -101,7 +101,7 @@ public class Update implements Query<UpdateResult, UpdateConfig>, Filterable<Upd
 
         sb.append("UPDATE ");
 
-        sb.append(this.table.getKey());
+        sb.append(this.table.getParamString());
         parameters.add(this.table);
 
         sb.append(" SET ");
@@ -109,7 +109,7 @@ public class Update implements Query<UpdateResult, UpdateConfig>, Filterable<Upd
         for (Entry<String, Param> entry : this.changes.entrySet()) {
             sb.append(entry.getKey());
             sb.append(" = ");
-            sb.append(entry.getValue().getKey());
+            sb.append(entry.getValue().getParamString());
             sb.append(", ");
             parameters.add(entry.getValue());
         }
@@ -119,7 +119,7 @@ public class Update implements Query<UpdateResult, UpdateConfig>, Filterable<Upd
 
         if (this.filter != null) {
             sb.append(" WHERE ");
-            ParamString filterString = this.filter.build();
+            ParameterizedString filterString = this.filter.build();
             sb.append(filterString.getSql());
             parameters.addAll(filterString.getParameters());
         }
@@ -127,24 +127,24 @@ public class Update implements Query<UpdateResult, UpdateConfig>, Filterable<Upd
         if (this.order != null) {
             sb.append(" ORDER BY ");
             for (DirectionalParam order : this.order) {
-                sb.append(order.getKey());
+                sb.append(order.getParamString());
                 parameters.add(order);
             }
         }
 
         if (this.limit != null) {
             sb.append(" LIMIT ");
-            sb.append(this.limit.getKey());
+            sb.append(this.limit.getParamString());
             parameters.add(this.limit);
         }
 
-        return new ParamString(sb.toString(), parameters);
+        return new ParameterizedString(sb.toString(), parameters);
     }
 
     @Override
     public UpdateResult execute(Optional<UpdateConfig> config) throws DatabaseException {
         // The query
-        ParamString query = build();
+        ParameterizedString query = build();
 
         // Create statement
         PreparedStatement statement = config.orElse(UpdateConfig.DEFAULT).createStatement(this.database, query.getSql());

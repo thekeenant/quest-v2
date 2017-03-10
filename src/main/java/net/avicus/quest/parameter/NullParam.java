@@ -13,11 +13,11 @@ public class NullParam implements Param {
     }
 
     @Override
-    public String getKey() {
+    public String getParamString() {
         return "NULL";
     }
 
-    public List<Object> getObjects() {
+    public List<Object> getValues() {
         return Collections.emptyList();
     }
 

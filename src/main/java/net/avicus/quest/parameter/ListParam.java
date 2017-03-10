@@ -11,21 +11,21 @@ import java.util.List;
  * SELECT * FROM `users` WHERE `id` IN (?, ?, ?);
  */
 public class ListParam implements Param {
-    private final List<Param> parameters;
+    private final List<Param> items;
 
-    public ListParam(List<Param> parameters) {
-        if (parameters.isEmpty()) {
+    public ListParam(List<Param> items) {
+        if (items.isEmpty()) {
             throw new IllegalArgumentException("List parameter must have at least one parameter.");
         }
-        this.parameters = parameters;
+        this.items = items;
     }
 
     @Override
-    public String getKey() {
+    public String getParamString() {
         StringBuilder sb = new StringBuilder("(");
-        for (Param parameter : this.parameters) {
-            sb.append(parameter.getKey());
-            if (this.parameters.indexOf(parameter) != this.parameters.size() - 1) {
+        for (Param param : this.items) {
+            sb.append(param.getParamString());
+            if (this.items.indexOf(param) != this.items.size() - 1) {
                 sb.append(", ");
             }
         }
@@ -33,16 +33,16 @@ public class ListParam implements Param {
         return sb.toString();
     }
 
-    public List<Object> getObjects() {
+    public List<Object> getValues() {
         List<Object> values = new ArrayList<>();
-        for (Param parameter : this.parameters) {
-            values.addAll(parameter.getObjects());
+        for (Param parameter : this.items) {
+            values.addAll(parameter.getValues());
         }
         return values;
     }
 
     @Override
     public String toString() {
-        return "ListParam(key=" + getKey() + ", values=" + getObjects() + ")";
+        return "ListParam(key=" + getParamString() + ", values=" + getValues() + ")";
     }
 }

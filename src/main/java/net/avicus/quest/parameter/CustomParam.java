@@ -25,14 +25,14 @@ public class CustomParam implements Param {
     }
 
     @Override
-    public String getKey() {
+    public String getParamString() {
         return this.key;
     }
 
-    public List<Object> getObjects() {
+    public List<Object> getValues() {
         List<Object> objects = new ArrayList<>();
         for (Param param : this.params) {
-            objects.addAll(param.getObjects());
+            objects.addAll(param.getValues());
         }
         return objects;
     }

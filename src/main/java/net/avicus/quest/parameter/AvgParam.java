@@ -16,12 +16,12 @@ public class AvgParam implements Param {
     }
 
     @Override
-    public String getKey() {
-        return "AVG(" + this.expression.getKey() + ")";
+    public String getParamString() {
+        return "AVG(" + this.expression.getParamString() + ")";
     }
 
-    public List<Object> getObjects() {
-        return this.expression.getObjects();
+    public List<Object> getValues() {
+        return this.expression.getValues();
     }
 
     @Override

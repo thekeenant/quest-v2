@@ -26,12 +26,12 @@ public class DirectionalParam implements Param {
     }
 
     @Override
-    public String getKey() {
-        return this.child.getKey() + " " + this.direction.name();
+    public String getParamString() {
+        return this.child.getParamString() + " " + this.direction.name();
     }
 
-    public List<Object> getObjects() {
-        return this.child.getObjects();
+    public List<Object> getValues() {
+        return this.child.getValues();
     }
 
     public enum Direction {

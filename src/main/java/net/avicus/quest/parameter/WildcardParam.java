@@ -13,11 +13,11 @@ public class WildcardParam implements Param {
     }
 
     @Override
-    public String getKey() {
+    public String getParamString() {
         return "*";
     }
 
-    public List<Object> getObjects() {
+    public List<Object> getValues() {
         return Collections.emptyList();
     }
 

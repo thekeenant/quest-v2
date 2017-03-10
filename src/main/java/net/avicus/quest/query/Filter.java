@@ -1,7 +1,7 @@
 package net.avicus.quest.query;
 
 import net.avicus.quest.Param;
-import net.avicus.quest.ParamString;
+import net.avicus.quest.ParameterizedString;
 import net.avicus.quest.parameter.ComparisonParam;
 import net.avicus.quest.parameter.FieldParam;
 import net.avicus.quest.parameter.ObjectParam;
@@ -72,14 +72,14 @@ public class Filter {
         return duplicate().or(filter);
     }
 
-    public ParamString build() {
+    public ParameterizedString build() {
         StringBuilder sb = new StringBuilder();
         List<Param> parameters = new ArrayList<>();
 
         sb.append("(");
-        sb.append(this.key.getKey());
-        sb.append(this.comparison.getKey());
-        sb.append(this.value.getKey());
+        sb.append(this.key.getParamString());
+        sb.append(this.comparison.getParamString());
+        sb.append(this.value.getParamString());
         sb.append(")");
 
         parameters.add(this.key);
@@ -92,7 +92,7 @@ public class Filter {
                 sb.append("(");
             }
             for (Filter filter : this.ands) {
-                ParamString built = filter.build();
+                ParameterizedString built = filter.build();
                 sb.append(built.getSql());
                 parameters.addAll(built.getParameters());
 
@@ -111,7 +111,7 @@ public class Filter {
                 sb.append("(");
             }
             for (Filter filter : this.ors) {
-                ParamString built = filter.build();
+                ParameterizedString built = filter.build();
                 sb.append(built.getSql());
                 parameters.addAll(built.getParameters());
 
@@ -124,6 +124,6 @@ public class Filter {
             }
         }
 
-        return new ParamString(sb.toString(), parameters);
+        return new ParameterizedString(sb.toString(), parameters);
     }
 }

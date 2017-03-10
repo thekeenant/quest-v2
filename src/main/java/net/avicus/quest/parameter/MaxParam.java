@@ -16,12 +16,12 @@ public class MaxParam implements Param {
     }
 
     @Override
-    public String getKey() {
-        return "MAX(" + this.expression.getKey() + ")";
+    public String getParamString() {
+        return "MAX(" + this.expression.getParamString() + ")";
     }
 
-    public List<Object> getObjects() {
-        return this.expression.getObjects();
+    public List<Object> getValues() {
+        return this.expression.getValues();
     }
 
     @Override

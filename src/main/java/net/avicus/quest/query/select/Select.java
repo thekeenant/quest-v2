@@ -1,7 +1,7 @@
 package net.avicus.quest.query.select;
 
 import net.avicus.quest.Param;
-import net.avicus.quest.ParamString;
+import net.avicus.quest.ParameterizedString;
 import net.avicus.quest.query.Query;
 import net.avicus.quest.database.Database;
 import net.avicus.quest.database.DatabaseException;
@@ -131,7 +131,7 @@ public class Select implements Query<SelectResult, SelectConfig>, Filterable<Sel
         return join(new CustomParam(sql, params));
     }
 
-    public ParamString build() {
+    public ParameterizedString build() {
         StringBuilder sb = new StringBuilder();
         List<Param> parameters = new ArrayList<>();
 
@@ -143,7 +143,7 @@ public class Select implements Query<SelectResult, SelectConfig>, Filterable<Sel
             columns = Collections.singletonList(WildcardParam.INSTANCE);
         }
         for (Param column : columns) {
-            sb.append(column.getKey());
+            sb.append(column.getParamString());
             parameters.add(column);
 
             if (!columns.get(columns.size() - 1).equals(column)) {
@@ -153,55 +153,55 @@ public class Select implements Query<SelectResult, SelectConfig>, Filterable<Sel
 
         sb.append(" FROM ");
 
-        sb.append(this.table.getKey());
+        sb.append(this.table.getParamString());
         parameters.add(this.table);
 
         if (this.join != null) {
             sb.append(" ");
-            sb.append(this.join.getKey());
+            sb.append(this.join.getParamString());
             parameters.add(this.join);
         }
 
         if (this.filter != null) {
             sb.append(" WHERE ");
-            ParamString filterString = this.filter.build();
+            ParameterizedString filterString = this.filter.build();
             sb.append(filterString.getSql());
             parameters.addAll(filterString.getParameters());
         }
 
         if (this.groupBy != null) {
             sb.append(" GROUP BY ");
-            sb.append(this.groupBy.getKey());
+            sb.append(this.groupBy.getParamString());
             parameters.add(this.groupBy);
         }
 
         if (this.order != null) {
             sb.append(" ORDER BY ");
             for (Param order : this.order) {
-                sb.append(order.getKey());
+                sb.append(order.getParamString());
                 parameters.add(order);
             }
         }
 
         if (this.limit != null) {
             sb.append(" LIMIT ");
-            sb.append(this.limit.getKey());
+            sb.append(this.limit.getParamString());
             parameters.add(this.limit);
 
             if (this.offset != null) {
                 sb.append(" OFFSET ");
-                sb.append(this.offset.getKey());
+                sb.append(this.offset.getParamString());
                 parameters.add(this.limit);
             }
         }
 
-        return new ParamString(sb.toString(), parameters);
+        return new ParameterizedString(sb.toString(), parameters);
     }
 
     @Override
     public SelectResult execute(Optional<SelectConfig> config) throws DatabaseException {
         // The query
-        ParamString query = build();
+        ParameterizedString query = build();
 
         // Create statement
         PreparedStatement statement = config.orElse(SelectConfig.DEFAULT).createStatement(this.database, query.getSql());
@@ -218,15 +218,15 @@ public class Select implements Query<SelectResult, SelectConfig>, Filterable<Sel
     }
 
     @Override
-    public String getKey() {
+    public String getParamString() {
         return build().getSql();
     }
 
     @Override
-    public List<Object> getObjects() {
+    public List<Object> getValues() {
         List<Object> objects = new ArrayList<>();
         for (Param param : build().getParameters()) {
-            objects.addAll(param.getObjects());
+            objects.addAll(param.getValues());
         }
         return objects;
     }

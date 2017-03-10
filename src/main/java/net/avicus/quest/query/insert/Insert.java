@@ -1,7 +1,7 @@
 package net.avicus.quest.query.insert;
 
 import net.avicus.quest.Param;
-import net.avicus.quest.ParamString;
+import net.avicus.quest.ParameterizedString;
 import net.avicus.quest.parameter.FieldParam;
 import net.avicus.quest.query.Query;
 import net.avicus.quest.database.Database;
@@ -48,7 +48,7 @@ public class Insert implements Query<InsertResult, InsertConfig> {
         return query;
     }
 
-    public ParamString build() {
+    public ParameterizedString build() {
         if (this.insertions.isEmpty() || this.select == null) {
             throw new DatabaseException("No insertions to be made.");
         }
@@ -58,7 +58,7 @@ public class Insert implements Query<InsertResult, InsertConfig> {
 
         sb.append("INSERT INTO ");
 
-        sb.append(this.table.getKey());
+        sb.append(this.table.getParamString());
         parameters.add(this.table);
 
         sb.append(" ");
@@ -82,7 +82,7 @@ public class Insert implements Query<InsertResult, InsertConfig> {
                 sb.append("(");
                 for (String column : columns) {
                     Param value = insertion.getValue(column);
-                    sb.append(value.getKey());
+                    sb.append(value.getParamString());
                     parameters.add(value);
                     sb.append(", ");
                 }
@@ -91,11 +91,11 @@ public class Insert implements Query<InsertResult, InsertConfig> {
             }
         }
         else {
-            sb.append(this.select.getKey());
+            sb.append(this.select.getParamString());
             parameters.add(this.select);
         }
 
-        return new ParamString(sb.toString(), parameters);
+        return new ParameterizedString(sb.toString(), parameters);
     }
 
     @Override
@@ -103,7 +103,7 @@ public class Insert implements Query<InsertResult, InsertConfig> {
         InsertConfig config = optConfig.orElse(InsertConfig.DEFAULT);
 
         // The query
-        ParamString query = build();
+        ParameterizedString query = build();
 
         // Create statement
         PreparedStatement statement = config.createStatement(this.database, query.getSql());

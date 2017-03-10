@@ -13,11 +13,11 @@ public class DefaultParam implements Param {
     }
 
     @Override
-    public String getKey() {
+    public String getParamString() {
         return "DEFAULT";
     }
 
-    public List<Object> getObjects() {
+    public List<Object> getValues() {
         return Collections.emptyList();
     }
 

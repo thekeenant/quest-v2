@@ -30,12 +30,12 @@ public class CountParam implements Param {
     }
 
     @Override
-    public String getKey() {
-        return "COUNT(" + this.child.getKey() + ")";
+    public String getParamString() {
+        return "COUNT(" + this.child.getParamString() + ")";
     }
 
-    public List<Object> getObjects() {
-        return this.child.getObjects();
+    public List<Object> getValues() {
+        return this.child.getValues();
     }
 
     @Override
