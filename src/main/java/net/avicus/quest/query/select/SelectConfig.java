@@ -8,7 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class SelectConfig implements QueryConfig {
-    public static SelectConfig DEFAULT = new SelectConfig(false, -1, false);
+    public static SelectConfig DEFAULT = new SelectConfig(false, 5, false);
 
     private final boolean iterate;
     private final int timeout;

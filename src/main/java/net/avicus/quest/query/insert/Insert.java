@@ -30,9 +30,9 @@ public class Insert implements Query<InsertResult, InsertConfig> {
         return copy;
     }
 
-    public Insert plus(Insertion insertion) {
+    public Insert insert(Insertion insertion) {
         if (this.select != null) {
-            throw new DatabaseException("Select query cannot be combined with insertion values.");
+            throw new DatabaseException("Select query cannot be combined insert insertion values.");
         }
         Insert query = duplicate();
         query.insertions.add(insertion);
@@ -41,7 +41,7 @@ public class Insert implements Query<InsertResult, InsertConfig> {
 
     public Insert select(Select select) {
         if (!this.insertions.isEmpty()) {
-            throw new DatabaseException("Insertion values cannot be combined with select query.");
+            throw new DatabaseException("Insertion values cannot be combined insert select query.");
         }
         Insert query = duplicate();
         query.select = select;
@@ -49,7 +49,7 @@ public class Insert implements Query<InsertResult, InsertConfig> {
     }
 
     public ParameterizedString build() {
-        if (this.insertions.isEmpty() || this.select == null) {
+        if (this.insertions.isEmpty()) {
             throw new DatabaseException("No insertions to be made.");
         }
 

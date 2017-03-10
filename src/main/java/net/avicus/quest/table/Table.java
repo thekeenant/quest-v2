@@ -50,13 +50,13 @@ public abstract class Table<M extends Model> implements RowMapper<M> {
 
     public Insert insert(M model) {
         Insert insert = new Insert(this.database, this.table);
-        insert = insert.plus(model.toInsertion());
+        insert = insert.insert(model.toInsertion());
         return insert;
     }
 
     public void insert(M model, Consumer<Row> handler) {
         Insert insert = new Insert(this.database, this.table);
-        insert = insert.plus(model.toInsertion());
+        insert = insert.insert(model.toInsertion());
 
         InsertResult result = insert.execute();
         if (result.getGenerated().isPresent()) {

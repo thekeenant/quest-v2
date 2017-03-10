@@ -9,6 +9,7 @@ public class MappedColumn<I, O> extends FieldParam {
     private final Function<I, O> mapper;
 
     public MappedColumn(String field, Function<I, O> mapper) {
+        super(field);
         this.field = field;
         this.mapper = mapper;
     }
