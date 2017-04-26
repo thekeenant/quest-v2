@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Delete implements Query<DeleteResult, DeleteConfig>, Filterable<Delete> {
+public class Delete implements Query<DeleteResult>, Filterable<Delete> {
     private final DatabaseConnection database;
     private final FieldParam table;
     private Filter filter;
@@ -113,12 +113,12 @@ public class Delete implements Query<DeleteResult, DeleteConfig>, Filterable<Del
     }
 
     @Override
-    public DeleteResult execute(DeleteConfig config) throws DatabaseException {
+    public DeleteResult execute() throws DatabaseException {
         // The query
         ParameterizedString query = build();
 
         // Create statement
-        PreparedStatement statement = config.createStatement(this.database, query.getSql());
+        PreparedStatement statement = database.createUpdateStatement(query.getSql());
 
 
         System.out.println(build());
@@ -132,10 +132,5 @@ public class Delete implements Query<DeleteResult, DeleteConfig>, Filterable<Del
     @Override
     public String toString() {
         return "Delete(" + build() + ")";
-    }
-
-    @Override
-    public DeleteConfig getDefaultConfig() {
-        return DeleteConfig.DEFAULT;
     }
 }

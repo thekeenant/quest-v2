@@ -1,12 +1,13 @@
 import net.avicus.quest.Row;
 import net.avicus.quest.database.Database;
 import net.avicus.quest.database.SQLiteUrl;
+import net.avicus.quest.parameter.WildcardParam;
 import net.avicus.quest.query.insert.Insertion;
 import net.avicus.quest.query.select.Select;
 import net.avicus.quest.Column;
 import org.junit.Test;
 
-public class SQLiteTest {
+public class SQLiteExample {
     @Test
     public void db() {
         Database db = new Database(SQLiteUrl.of("example.db"));
@@ -23,10 +24,10 @@ public class SQLiteTest {
 
         Users users = new Users(db);
 
-        int agesSum = users.ages().sum()
+        System.out.println(users.all().select(WildcardParam.INSTANCE.sum()));
 
-        System.out.println(users.ages().sum());
-
+        Object num = users.all().select(Users.age.sum()).execute().stream(1).findFirst();
+        System.out.println(num);
     }
 
     private String rowMapper(Row user) {

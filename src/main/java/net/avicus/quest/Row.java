@@ -16,9 +16,9 @@ import java.util.stream.Collectors;
  */
 public class Row {
     private final List<String> columnNames;
-    private final List<RowValue> values;
+    private final List<RowField> values;
 
-    public Row(List<String> columnNames, List<RowValue> values) {
+    public Row(List<String> columnNames, List<RowField> values) {
         this.columnNames = columnNames;
         this.values = values;
     }
@@ -57,7 +57,7 @@ public class Row {
         return this.columnNames.size();
     }
 
-    public RowValue get(int number) throws DatabaseException {
+    public RowField get(int number) throws DatabaseException {
         int index = number - 1;
         if (!hasColumn(number)) {
             throw new IllegalArgumentException("Column number not present: " + number + ".");
@@ -65,7 +65,7 @@ public class Row {
         return this.values.get(index);
     }
 
-    public RowValue get(String column) {
+    public RowField get(String column) {
         int number = this.columnNames.indexOf(column) + 1;
         if (number == 0) {
             throw new IllegalArgumentException("Column name not present: " + column + ".");
@@ -101,10 +101,10 @@ public class Row {
     }
 
     public static Row fromSelectResultSet(SelectResult result, ResultSet set) {
-        List<RowValue> values = new ArrayList<>();
+        List<RowField> values = new ArrayList<>();
         for (int i = 1; i <= result.getColumnCount(); i++) {
             try {
-                values.add(new RowValue(set.getObject(i)));
+                values.add(new RowField(set.getObject(i)));
             } catch (SQLException e) {
                 throw new DatabaseException(e);
             }
@@ -114,12 +114,12 @@ public class Row {
 
     public static Row fromResultSet(ResultSet set) {
         List<String> columnNames = new ArrayList<>();
-        List<RowValue> values = new ArrayList<>();
+        List<RowField> values = new ArrayList<>();
 
         try {
             for (int i = 1; i <= set.getMetaData().getColumnCount(); i++) {
                 columnNames.add(set.getMetaData().getColumnName(i));
-                values.add(new RowValue(set.getObject(i)));
+                values.add(new RowField(set.getObject(i)));
             }
         } catch (SQLException e) {
             throw new DatabaseException(e);
@@ -128,12 +128,12 @@ public class Row {
         return new Row(columnNames, values);
     }
 
-    public static Row fromRowValues(Map<String, RowValue> data) {
+    public static Row fromRowValues(Map<String, RowField> data) {
         return new Row(new ArrayList<>(data.keySet()), new ArrayList<>(data.values()));
     }
 
     public static Row fromObjects(Map<String, Object> data) {
-        List<RowValue> values = data.values().stream().map(RowValue::new).collect(Collectors.toList());
+        List<RowField> values = data.values().stream().map(RowField::new).collect(Collectors.toList());
         return new Row(new ArrayList<>(data.keySet()), values);
     }
 
@@ -142,20 +142,20 @@ public class Row {
     }
 
     public static class RowBuilder {
-        private final Map<String, RowValue> values;
+        private final Map<String, RowField> values;
 
         private RowBuilder() {
             this.values = new HashMap<>();
         }
 
         public RowBuilder value(String column, Object value) {
-            this.values.put(column, new RowValue(value));
+            this.values.put(column, new RowField(value));
             return this;
         }
 
         public RowBuilder values(Map<String, Object> values) {
             for (Entry<String, Object> entry : values.entrySet()) {
-                this.values.put(entry.getKey(), new RowValue(entry.getValue()));
+                this.values.put(entry.getKey(), new RowField(entry.getValue()));
             }
             return this;
         }

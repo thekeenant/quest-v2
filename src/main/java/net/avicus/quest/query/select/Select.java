@@ -2,7 +2,6 @@ package net.avicus.quest.query.select;
 
 import net.avicus.quest.Param;
 import net.avicus.quest.ParameterizedString;
-import net.avicus.quest.Row;
 import net.avicus.quest.database.DatabaseConnection;
 import net.avicus.quest.database.DatabaseException;
 import net.avicus.quest.parameter.CustomParam;
@@ -18,9 +17,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
-public class Select implements Query<SelectResult, SelectConfig>, Filterable<Select>, Param {
+public class Select implements Query<SelectResult>, Filterable<Select> {
     private final DatabaseConnection database;
     private final FieldParam table;
     private Filter filter;
@@ -206,18 +204,20 @@ public class Select implements Query<SelectResult, SelectConfig>, Filterable<Sel
         return new ParameterizedString(sb.toString(), parameters);
     }
 
-    @Override
-    public SelectConfig getDefaultConfig() {
-        return SelectConfig.DEFAULT;
+    public SelectResult execute() {
+        return execute(false);
     }
 
-    @Override
-    public SelectResult execute(SelectConfig config) throws DatabaseException {
+    public SelectResult execute(boolean iterate) {
+        return execute(iterate, null);
+    }
+
+    public SelectResult execute(boolean iterate, Integer timeout) throws DatabaseException {
         // The query
         ParameterizedString query = build();
 
         // Create statement
-        PreparedStatement statement = config.createStatement(this.database, query.getSql());
+        PreparedStatement statement = database.createQueryStatement(query.getSql(), iterate, timeout);
 
         // Add variables (?, ?)
         query.apply(statement, 1);
@@ -225,30 +225,28 @@ public class Select implements Query<SelectResult, SelectConfig>, Filterable<Sel
         return SelectResult.execute(statement);
     }
 
-    public Stream<Row> stream(SelectConfig config) {
-        return execute(config).stream();
-    }
-
-    public Stream<Row> stream() {
-        return execute().stream();
-    }
-
     @Override
     public String toString() {
         return "Select(" + build() + ")";
     }
 
-    @Override
-    public String getParamString() {
-        return build().getSql();
+    public SelectParam toParam() {
+        return new SelectParam();
     }
 
-    @Override
-    public List<Object> getValues() {
-        List<Object> objects = new ArrayList<>();
-        for (Param param : build().getParameters()) {
-            objects.addAll(param.getValues());
+    public class SelectParam implements Param {
+        @Override
+        public String getParamString() {
+            return build().getSql();
         }
-        return objects;
+
+        @Override
+        public List<Object> getValues() {
+            List<Object> objects = new ArrayList<>();
+            for (Param param : build().getParameters()) {
+                objects.addAll(param.getValues());
+            }
+            return objects;
+        }
     }
 }

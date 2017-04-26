@@ -9,10 +9,10 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 
-public class RowValue {
+public class RowField {
     private final Object data;
 
-    public RowValue(Object data) {
+    public RowField(Object data) {
         this.data = data;
     }
 
@@ -84,7 +84,7 @@ public class RowValue {
     }
 
     public Optional<Boolean> asBoolean() {
-        return as(Object.class).map(RowValue::booleanValue);
+        return as(Object.class).map(RowField::booleanValue);
     }
 
     public boolean asRequiredBoolean() {

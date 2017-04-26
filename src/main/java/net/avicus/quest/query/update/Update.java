@@ -3,20 +3,19 @@ package net.avicus.quest.query.update;
 import net.avicus.quest.Param;
 import net.avicus.quest.ParameterizedString;
 import net.avicus.quest.database.DatabaseConnection;
-import net.avicus.quest.parameter.DirectionalParam;
-import net.avicus.quest.parameter.ObjectParam;
-import net.avicus.quest.query.Query;
-import net.avicus.quest.database.Database;
 import net.avicus.quest.database.DatabaseException;
+import net.avicus.quest.parameter.DirectionalParam;
+import net.avicus.quest.parameter.FieldParam;
+import net.avicus.quest.parameter.ObjectParam;
 import net.avicus.quest.query.Filter;
 import net.avicus.quest.query.Filterable;
-import net.avicus.quest.parameter.FieldParam;
+import net.avicus.quest.query.Query;
 
 import java.sql.PreparedStatement;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class Update implements Query<UpdateResult, UpdateConfig>, Filterable<Update> {
+public class Update implements Query<UpdateResult>, Filterable<Update> {
     private final DatabaseConnection database;
     private final FieldParam table;
     private final Map<String, Param> changes;
@@ -143,12 +142,12 @@ public class Update implements Query<UpdateResult, UpdateConfig>, Filterable<Upd
     }
 
     @Override
-    public UpdateResult execute(UpdateConfig config) throws DatabaseException {
+    public UpdateResult execute() throws DatabaseException {
         // The query
         ParameterizedString query = build();
 
         // Create statement
-        PreparedStatement statement = config.createStatement(this.database, query.getSql());
+        PreparedStatement statement = database.createUpdateStatement(query.getSql());
 
         // Add variables (?, ?)
         query.apply(statement, 1);
@@ -159,10 +158,5 @@ public class Update implements Query<UpdateResult, UpdateConfig>, Filterable<Upd
     @Override
     public String toString() {
         return "Update(" + build() + ")";
-    }
-
-    @Override
-    public UpdateConfig getDefaultConfig() {
-        return UpdateConfig.DEFAULT;
     }
 }

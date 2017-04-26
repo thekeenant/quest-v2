@@ -3,16 +3,18 @@ package net.avicus.quest.query.insert;
 import net.avicus.quest.Param;
 import net.avicus.quest.ParameterizedString;
 import net.avicus.quest.database.DatabaseConnection;
+import net.avicus.quest.database.DatabaseException;
 import net.avicus.quest.parameter.FieldParam;
 import net.avicus.quest.query.Query;
-import net.avicus.quest.database.Database;
-import net.avicus.quest.database.DatabaseException;
 import net.avicus.quest.query.select.Select;
 
 import java.sql.PreparedStatement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class Insert implements Query<InsertResult, InsertConfig> {
+public class Insert implements Query<InsertResult> {
     private final DatabaseConnection database;
     private final FieldParam table;
     private final List<Insertion> insertions;
@@ -92,20 +94,21 @@ public class Insert implements Query<InsertResult, InsertConfig> {
             }
         }
         else {
-            sb.append(this.select.getParamString());
-            parameters.add(this.select);
+            Param param = select.toParam();
+            sb.append(param.getParamString());
+            parameters.add(param);
         }
 
         return new ParameterizedString(sb.toString(), parameters);
     }
 
     @Override
-    public InsertResult execute(InsertConfig config) throws DatabaseException {
+    public InsertResult execute() throws DatabaseException {
         // The query
         ParameterizedString query = build();
 
         // Create statement
-        PreparedStatement statement = config.createStatement(this.database, query.getSql());
+        PreparedStatement statement = database.createUpdateStatement(query.getSql());
 
         // Add variables (?, ?)
         query.apply(statement, 1);
@@ -116,10 +119,5 @@ public class Insert implements Query<InsertResult, InsertConfig> {
     @Override
     public String toString() {
         return "Insert(" + build() + ")";
-    }
-
-    @Override
-    public InsertConfig getDefaultConfig() {
-        return InsertConfig.DEFAULT;
     }
 }

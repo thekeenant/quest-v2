@@ -1,6 +1,7 @@
 package net.avicus.quest.query.select;
 
 import net.avicus.quest.Row;
+import net.avicus.quest.RowField;
 import net.avicus.quest.database.DatabaseException;
 import net.avicus.quest.query.QueryResult;
 
@@ -11,7 +12,7 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class SelectResult implements QueryResult, Iterable<Row> {
+public class SelectResult implements QueryResult {
     private final ResultSet set;
     private final List<String> columns;
     private boolean started;
@@ -77,14 +78,41 @@ public class SelectResult implements QueryResult, Iterable<Row> {
         }
     }
 
-    public Stream<Row> stream() {
+    public Stream<RowField> stream(int field) throws DatabaseException {
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator(field), Spliterator.ORDERED), false);
+    }
+
+    public Stream<Row> stream() throws DatabaseException {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator(), Spliterator.ORDERED), false);
     }
 
-    @Override
+    public Iterator<RowField> iterator(int field) throws DatabaseException {
+        return new SelectFieldIterator(field);
+    }
+
     public Iterator<Row> iterator() throws DatabaseException {
         checkNotStarted();
         return new SelectIterator();
+    }
+
+    public class SelectFieldIterator implements Iterator<RowField> {
+        private final int field;
+        private final SelectIterator iterator;
+
+        public SelectFieldIterator(int field) {
+            this.field = field;
+            iterator = new SelectIterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+
+        @Override
+        public RowField next() {
+            return iterator.next().get(field);
+        }
     }
 
     public class SelectIterator implements Iterator<Row> {

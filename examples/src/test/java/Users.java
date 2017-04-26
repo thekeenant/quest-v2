@@ -6,11 +6,11 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class Users {
-    private static final Column<Integer> id = Column.of("id");
-    private static final Column<String> name = Column.of("name");
-    private static final Column<Integer> age = Column.of("age");
+    public static final Column<Integer> id = Column.of("id");
+    public static final Column<String> name = Column.of("name");
+    public static final Column<Integer> age = Column.of("age");
 
-    private static final Column<Quality> quality =
+    public static final Column<Quality> quality =
             Column.<String, Quality>of("quality", (row, str) -> Quality.valueOf(str));
 
     private final Database database;
@@ -39,10 +39,10 @@ public class Users {
     }
 
     public IntStream ages() {
-        return all().stream().map(age::getRequired).mapToInt(Integer::intValue);
+        return all().execute().stream().map(age::getRequired).mapToInt(Integer::intValue);
     }
 
     public Stream<Quality> qualities() {
-        return all().stream().map(quality::getRequired);
+        return all().execute().stream().map(quality::getRequired);
     }
 }

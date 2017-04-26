@@ -33,6 +33,10 @@ public interface Param {
         return new DirectionalParam(this, Direction.DESC);
     }
 
+    default CountParam count() {
+        return new CountParam(this);
+    }
+
     default SumParam sum() {
         return new SumParam(this);
     }
