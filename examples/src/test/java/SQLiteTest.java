@@ -3,12 +3,14 @@ import net.avicus.quest.database.DatabaseException;
 import net.avicus.quest.database.url.DatabaseUrl;
 import net.avicus.quest.query.insert.Insertion;
 import net.avicus.quest.query.select.Select;
-import net.avicus.quest.table.Column;
+import net.avicus.quest.Column;
 import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class SQLiteTest {
     @Test
@@ -48,6 +50,8 @@ public class SQLiteTest {
 
         Select select = db.select("users").where(age.lt(20));
 
-        System.out.println(select.execute().toList());
+        List list = select.execute().stream().map(row -> row.get(name) + " " + row.get(age)).collect(Collectors.toList());
+
+        System.out.println(list);
     }
 }

@@ -40,7 +40,7 @@ public class Insertion {
     }
 
     public static Insertion fromRow(Row row) {
-        Map<String, Object> data = row.toMap();
+        Map<String, Object> data = row.toHashMap();
         Map<String, Param> converted = new HashMap<>();
         for (Entry<String, Object> entry : data.entrySet()) {
             converted.put(entry.getKey(), new ObjectParam(entry.getValue()));

@@ -167,12 +167,14 @@ public class Database {
         try {
             PreparedStatement statement;
 
+            System.out.println(iterate);
+
             if (iterate) {
                 statement = this.connection.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
                 statement.setFetchSize(Integer.MIN_VALUE);
             }
             else {
-                statement = this.connection.prepareStatement(sql);
+                statement = this.connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             }
 
             return statement;

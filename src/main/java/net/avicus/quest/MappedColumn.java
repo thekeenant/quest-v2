@@ -1,4 +1,4 @@
-package net.avicus.quest.table;
+package net.avicus.quest;
 
 import net.avicus.quest.parameter.FieldParam;
 

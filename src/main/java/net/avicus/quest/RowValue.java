@@ -1,7 +1,6 @@
 package net.avicus.quest;
 
 import net.avicus.quest.database.DatabaseException;
-import net.avicus.quest.table.MappedColumn;
 
 import java.math.BigDecimal;
 import java.sql.Time;
