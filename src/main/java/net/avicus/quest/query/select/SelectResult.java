@@ -1,18 +1,17 @@
 package net.avicus.quest.query.select;
 
-import net.avicus.quest.query.QueryResult;
 import net.avicus.quest.Row;
 import net.avicus.quest.database.DatabaseException;
-import net.avicus.quest.table.RowMapper;
+import net.avicus.quest.query.QueryResult;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-public class SelectResult implements QueryResult {
+public class SelectResult implements QueryResult, Iterable<Row> {
     private final ResultSet set;
     private final List<String> columns;
     private boolean started;
@@ -61,14 +60,6 @@ public class SelectResult implements QueryResult {
         return this.current;
     }
 
-    public Optional<Row> findFirst() {
-        checkNotStarted();
-        if (next()) {
-            return Optional.of(this.current);
-        }
-        return Optional.empty();
-    }
-
     public List<Row> toList() {
         checkNotStarted();
 
@@ -80,29 +71,45 @@ public class SelectResult implements QueryResult {
         return rows;
     }
 
-    public <M> M getCurrentMapped(RowMapper<M> mapper) {
-        return getCurrent().map(mapper);
-    }
-
-    public <M> Optional<M> findFirstMapped(RowMapper<M> mapper) {
-
-        return findFirst().map(mapper::map);
-    }
-
-    public <M> List<M> toListMapped(RowMapper<M> mapper) {
-        checkNotStarted();
-
-        List<M> rows = new ArrayList<>();
-        while (next()) {
-            rows.add(getCurrentMapped(mapper));
-        }
-
-        return rows;
-    }
-
     private void checkNotStarted() {
         if (isStarted()) {
             throw new DatabaseException("Select was already started.");
+        }
+    }
+
+    public Stream<Row> stream() {
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator(), Spliterator.ORDERED), false);
+    }
+
+    @Override
+    public Iterator<Row> iterator() throws DatabaseException {
+        checkNotStarted();
+        return new SelectIterator();
+    }
+
+    public class SelectIterator implements Iterator<Row> {
+        private final List<Row> backlog = new ArrayList<>(3);
+
+        private void doNext() {
+            boolean nextExists = SelectResult.this.next();
+            if (nextExists) {
+                backlog.add(current);
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            doNext();
+            return !backlog.isEmpty();
+        }
+
+        @Override
+        public Row next() {
+            doNext();
+            if (backlog.isEmpty()) {
+                throw new NoSuchElementException();
+            }
+            return backlog.remove(0);
         }
     }
 

@@ -2,26 +2,28 @@ package net.avicus.quest.query.delete;
 
 import net.avicus.quest.Param;
 import net.avicus.quest.ParameterizedString;
+import net.avicus.quest.database.DatabaseConnection;
+import net.avicus.quest.database.DatabaseException;
 import net.avicus.quest.parameter.DirectionalParam;
 import net.avicus.quest.parameter.FieldParam;
-import net.avicus.quest.query.Query;
-import net.avicus.quest.database.Database;
-import net.avicus.quest.database.DatabaseException;
+import net.avicus.quest.parameter.ObjectParam;
 import net.avicus.quest.query.Filter;
 import net.avicus.quest.query.Filterable;
-import net.avicus.quest.parameter.ObjectParam;
+import net.avicus.quest.query.Query;
 
 import java.sql.PreparedStatement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Delete implements Query<DeleteResult, DeleteConfig>, Filterable<Delete> {
-    private final Database database;
+    private final DatabaseConnection database;
     private final FieldParam table;
     private Filter filter;
     private Param limit;
     private List<DirectionalParam> order;
 
-    public Delete(Database database, FieldParam table) {
+    public Delete(DatabaseConnection database, FieldParam table) {
         this.database = database;
         this.table = table;
     }
@@ -111,12 +113,12 @@ public class Delete implements Query<DeleteResult, DeleteConfig>, Filterable<Del
     }
 
     @Override
-    public DeleteResult execute(Optional<DeleteConfig> config) throws DatabaseException {
+    public DeleteResult execute(DeleteConfig config) throws DatabaseException {
         // The query
         ParameterizedString query = build();
 
         // Create statement
-        PreparedStatement statement = config.orElse(DeleteConfig.DEFAULT).createStatement(this.database, query.getSql());
+        PreparedStatement statement = config.createStatement(this.database, query.getSql());
 
 
         System.out.println(build());
@@ -130,5 +132,10 @@ public class Delete implements Query<DeleteResult, DeleteConfig>, Filterable<Del
     @Override
     public String toString() {
         return "Delete(" + build() + ")";
+    }
+
+    @Override
+    public DeleteConfig getDefaultConfig() {
+        return DeleteConfig.DEFAULT;
     }
 }

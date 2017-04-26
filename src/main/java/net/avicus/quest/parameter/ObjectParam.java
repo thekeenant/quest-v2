@@ -23,6 +23,6 @@ public class ObjectParam implements Param {
 
     @Override
     public String toString() {
-        return "ObjectParam(key=" + getParamString() + ", values=" + getValues() + ")";
+        return "ObjectParam(values=" + getValues() + ")";
     }
 }

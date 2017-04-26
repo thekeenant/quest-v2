@@ -1,14 +1,13 @@
 package net.avicus.quest;
 
 import net.avicus.quest.database.DatabaseException;
-import net.avicus.quest.table.MappedColumn;
 import net.avicus.quest.query.select.SelectResult;
-import net.avicus.quest.table.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -24,7 +23,11 @@ public class Row {
         this.values = values;
     }
 
-    public Map<String, Object> toMap() {
+    public <T> T map(Function<Row, ? extends T> mapper) {
+        return mapper.apply(this);
+    }
+
+    public Map<String, Object> toHashMap() {
         Map<String, Object> values = new HashMap<>();
         for (int i = 0; i < this.columnNames.size(); i++) {
             values.put(this.columnNames.get(i), this.values.get(i).asObject().orElse(null));
@@ -71,19 +74,13 @@ public class Row {
     }
 
     @SuppressWarnings("unchecked")
-    public <I, O> O getRequired(MappedColumn<I, O> column) {
-        I input = (I) get(column.getField()).asRequired(Object.class);
-        return column.map(input);
+    public <T> T getRequired(Column<T> column) {
+        return column.getRequired(this);
     }
 
     @SuppressWarnings("unchecked")
-    public <I, O> Optional<O> get(MappedColumn<I, O> column) {
-        Optional<I> input = (Optional<I>) get(column.getField()).as(Object.class);
-        return input.map(column::map);
-    }
-
-    public <U> U map(RowMapper<U> mapper) {
-        return mapper.map(this);
+    public <T> Optional<T> get(Column<T> column) {
+        return column.get(this);
     }
 
     @Override

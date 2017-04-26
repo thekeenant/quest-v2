@@ -2,6 +2,7 @@ package net.avicus.quest.query.insert;
 
 import net.avicus.quest.Param;
 import net.avicus.quest.ParameterizedString;
+import net.avicus.quest.database.DatabaseConnection;
 import net.avicus.quest.parameter.FieldParam;
 import net.avicus.quest.query.Query;
 import net.avicus.quest.database.Database;
@@ -12,12 +13,12 @@ import java.sql.PreparedStatement;
 import java.util.*;
 
 public class Insert implements Query<InsertResult, InsertConfig> {
-    private final Database database;
+    private final DatabaseConnection database;
     private final FieldParam table;
     private final List<Insertion> insertions;
     private Select select;
 
-    public Insert(Database database, FieldParam table) {
+    public Insert(DatabaseConnection database, FieldParam table) {
         this.database = database;
         this.table = table;
         this.insertions = new ArrayList<>();
@@ -99,9 +100,7 @@ public class Insert implements Query<InsertResult, InsertConfig> {
     }
 
     @Override
-    public InsertResult execute(Optional<InsertConfig> optConfig) throws DatabaseException {
-        InsertConfig config = optConfig.orElse(InsertConfig.DEFAULT);
-
+    public InsertResult execute(InsertConfig config) throws DatabaseException {
         // The query
         ParameterizedString query = build();
 
@@ -117,5 +116,10 @@ public class Insert implements Query<InsertResult, InsertConfig> {
     @Override
     public String toString() {
         return "Insert(" + build() + ")";
+    }
+
+    @Override
+    public InsertConfig getDefaultConfig() {
+        return InsertConfig.DEFAULT;
     }
 }

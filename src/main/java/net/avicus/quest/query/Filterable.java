@@ -37,10 +37,10 @@ public interface Filterable<C extends Query> {
     }
 
     default C where(Param column, Object value, ComparisonParam comparison) {
-        return where(new Filter(column, new ObjectParam(value), comparison));
+        return where(Filter.of(column, new ObjectParam(value), comparison));
     }
 
     default C where(Param column, Param value, ComparisonParam comparison) {
-        return where(new Filter(column, value, comparison));
+        return where(Filter.of(column, value, comparison));
     }
 }

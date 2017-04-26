@@ -2,18 +2,26 @@ package net.avicus.quest.query.select;
 
 import net.avicus.quest.Param;
 import net.avicus.quest.ParameterizedString;
-import net.avicus.quest.query.Query;
-import net.avicus.quest.database.Database;
+import net.avicus.quest.Row;
+import net.avicus.quest.database.DatabaseConnection;
 import net.avicus.quest.database.DatabaseException;
+import net.avicus.quest.parameter.CustomParam;
+import net.avicus.quest.parameter.FieldParam;
+import net.avicus.quest.parameter.ObjectParam;
+import net.avicus.quest.parameter.WildcardParam;
 import net.avicus.quest.query.Filter;
 import net.avicus.quest.query.Filterable;
-import net.avicus.quest.parameter.*;
+import net.avicus.quest.query.Query;
 
 import java.sql.PreparedStatement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
 
 public class Select implements Query<SelectResult, SelectConfig>, Filterable<Select>, Param {
-    private final Database database;
+    private final DatabaseConnection database;
     private final FieldParam table;
     private Filter filter;
     private List<Param> columns;
@@ -23,7 +31,7 @@ public class Select implements Query<SelectResult, SelectConfig>, Filterable<Sel
     private List<Param> order;
     private CustomParam join;
 
-    public Select(Database database, FieldParam table) {
+    public Select(DatabaseConnection database, FieldParam table) {
         this.database = database;
         this.table = table;
     }
@@ -199,17 +207,30 @@ public class Select implements Query<SelectResult, SelectConfig>, Filterable<Sel
     }
 
     @Override
-    public SelectResult execute(Optional<SelectConfig> config) throws DatabaseException {
+    public SelectConfig getDefaultConfig() {
+        return SelectConfig.DEFAULT;
+    }
+
+    @Override
+    public SelectResult execute(SelectConfig config) throws DatabaseException {
         // The query
         ParameterizedString query = build();
 
         // Create statement
-        PreparedStatement statement = config.orElse(SelectConfig.DEFAULT).createStatement(this.database, query.getSql());
+        PreparedStatement statement = config.createStatement(this.database, query.getSql());
 
         // Add variables (?, ?)
         query.apply(statement, 1);
 
         return SelectResult.execute(statement);
+    }
+
+    public Stream<Row> stream(SelectConfig config) {
+        return execute(config).stream();
+    }
+
+    public Stream<Row> stream() {
+        return execute().stream();
     }
 
     @Override

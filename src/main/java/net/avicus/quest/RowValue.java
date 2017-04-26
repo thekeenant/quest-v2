@@ -1,7 +1,6 @@
 package net.avicus.quest;
 
 import net.avicus.quest.database.DatabaseException;
-import net.avicus.quest.table.MappedColumn;
 
 import java.math.BigDecimal;
 import java.sql.Time;
@@ -35,12 +34,12 @@ public class RowValue {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Optional<T> as(MappedColumn<?, T> type) {
+    public <T> Optional<T> as(Column<T> type) {
         return (Optional<T>) as(Object.class);
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T asRequired(MappedColumn<?, T> type) {
+    public <T> T asRequired(Column<T> type) {
         return (T) asRequired(Object.class);
     }
 
