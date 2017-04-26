@@ -74,15 +74,13 @@ public class Row {
     }
 
     @SuppressWarnings("unchecked")
-    public <I, O> O getRequired(MappedColumn<I, O> column) {
-        I input = (I) get(column.getField()).asRequired(Object.class);
-        return column.map(input);
+    public <T> T getRequired(Column<T> column) {
+        return column.getRequired(this);
     }
 
     @SuppressWarnings("unchecked")
-    public <I, O> Optional<O> get(MappedColumn<I, O> column) {
-        Optional<I> input = (Optional<I>) get(column.getField()).as(Object.class);
-        return input.map(column::map);
+    public <T> Optional<T> get(Column<T> column) {
+        return column.get(this);
     }
 
     @Override

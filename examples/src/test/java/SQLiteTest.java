@@ -1,57 +1,34 @@
+import net.avicus.quest.Row;
 import net.avicus.quest.database.Database;
-import net.avicus.quest.database.DatabaseException;
-import net.avicus.quest.database.url.DatabaseUrl;
+import net.avicus.quest.database.SQLiteUrl;
 import net.avicus.quest.query.insert.Insertion;
 import net.avicus.quest.query.select.Select;
 import net.avicus.quest.Column;
 import org.junit.Test;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class SQLiteTest {
     @Test
     public void db() {
-        try {
-            Class.forName("org.sqlite.JDBC");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        Database db = new Database(new DatabaseUrl() {
-            @Override
-            public Connection establishConnection() throws DatabaseException {
-                Connection conn = null;
-                try {
-                    conn = DriverManager.getConnection("jdbc:sqlite:example.db");
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-                return conn;
-            }
-        });
-
+        Database db = new Database(SQLiteUrl.of("example.db"));
         db.open();
 
         db.rawUpdate("DROP TABLE IF EXISTS users");
-        db.rawUpdate("CREATE TABLE users (id int, name string, age int)");
+        db.rawUpdate("CREATE TABLE users (id int, name string, age int, quality string)");
 
-        Insertion insertion = Insertion.builder().value("id", 1).value("age", 19).value("name", "Keenan").build();
+        Insertion insertion = Insertion.builder().value("id", 1).value("age", 19).value("name", "Keenan").value("quality", "WISE").build();
         db.insert("users").insert(insertion).execute();
 
-        insertion = Insertion.builder().value("id", 2).value("age", 23).value("name", "Adam").build();
+        insertion = Insertion.builder().value("id", 2).value("age", 23).value("name", "Adam").value("quality", "WISE").build();
         db.insert("users").insert(insertion).execute();
 
-        Column<String> name = new Column<>("name");
-        Column<String> age = new Column<>("age");
+        Users users = new Users(db);
 
-        Select select = db.select("users").where(age.lt(20));
 
-        List list = select.execute().stream().map(row -> row.get(name) + " " + row.get(age)).collect(Collectors.toList());
+        System.out.println(users.ages().sum());
 
-        System.out.println(list);
+    }
+
+    private String rowMapper(Row user) {
+        return user.get("name").asRequiredString() + " (age " + user.get("age").asRequiredObject() + ")";
     }
 }

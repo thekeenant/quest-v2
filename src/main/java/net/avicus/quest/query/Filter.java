@@ -3,11 +3,8 @@ package net.avicus.quest.query;
 import net.avicus.quest.Param;
 import net.avicus.quest.ParameterizedString;
 import net.avicus.quest.parameter.ComparisonParam;
-import net.avicus.quest.parameter.FieldParam;
-import net.avicus.quest.parameter.ObjectParam;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class Filter {
@@ -16,66 +13,54 @@ public class Filter {
     private final ComparisonParam comparison;
     private final List<Filter> ands;
     private final List<Filter> ors;
+    private final boolean inverted;
 
-    private Filter(Param key, Param value, ComparisonParam comparison, List<Filter> ands, List<Filter> ors) {
+    private Filter(Param key, Param value, ComparisonParam comparison, List<Filter> ands, List<Filter> ors, boolean inverted) {
         this.key = key;
         this.value = value;
         this.comparison = comparison;
         this.ands = ands;
         this.ors = ors;
+        this.inverted = inverted;
     }
 
-    public Filter(Param key, Param value, ComparisonParam comparison) {
-        this(key, value, comparison, Collections.emptyList(), Collections.emptyList());
+    public static Filter of(Param key, Param value, ComparisonParam comparison) {
+        return new Filter(key, value, comparison, new ArrayList<>(), new ArrayList<>(), false);
     }
 
-    public Filter(Param key, Param value) {
-        this(key, value, ComparisonParam.EQUAL, Collections.emptyList(), Collections.emptyList());
-    }
-
-    public Filter(Param key, Object value, ComparisonParam comparison) {
-        this(key, new ObjectParam(value), comparison);
-    }
-
-    public Filter(Param key, Object value) {
-        this(key, new ObjectParam(value));
-    }
-
-    public Filter(String field, Object value, ComparisonParam comparison) {
-        this(new FieldParam(field), new ObjectParam(value), comparison);
-    }
-
-    public Filter(String field, Object value) {
-        this(new FieldParam(field), new ObjectParam(value));
-    }
-
-    public Filter(String field, Param value, ComparisonParam comparison) {
-        this(new FieldParam(field), value, comparison);
-    }
-
-    public Filter(String field, Param value) {
-        this(new FieldParam(field), value);
+    public static Filter of(Param key, Param value) {
+        return of(key, value, ComparisonParam.EQUAL);
     }
 
     public Filter duplicate() {
-        Filter filter = new Filter(this.key, this.value, this.comparison);
-        filter.ands.addAll(this.ands);
-        filter.ors.addAll(this.ors);
-        return filter;
+        List<Filter> ands = new ArrayList<>(this.ands);
+        List<Filter> ors = new ArrayList<>(this.ors);
+        return new Filter(key, value, comparison, ands, ors, inverted);
     }
 
     public Filter and(Filter filter) {
-        return duplicate().and(filter);
+        Filter dup = duplicate();
+        dup.ands.add(filter);
+        return dup;
     }
 
     public Filter or(Filter filter) {
-        return duplicate().or(filter);
+        Filter dup = duplicate();
+        dup.ors.add(filter);
+        return dup;
+    }
+
+    public Filter invert() {
+        return new Filter(key, value, comparison, ands, ors, !inverted);
     }
 
     public ParameterizedString build() {
         StringBuilder sb = new StringBuilder();
         List<Param> parameters = new ArrayList<>();
 
+        if (inverted) {
+            sb.append("NOT ");
+        }
         sb.append("(");
         sb.append(this.key.getParamString());
         sb.append(this.comparison.getParamString());

@@ -1,6 +1,4 @@
-package net.avicus.quest.database.url;
-
-import net.avicus.quest.database.DatabaseException;
+package net.avicus.quest.database;
 
 import java.sql.Connection;
 

@@ -84,29 +84,32 @@ public class SelectResult implements QueryResult, Iterable<Row> {
     @Override
     public Iterator<Row> iterator() throws DatabaseException {
         checkNotStarted();
-        try {
-            boolean hasNext = set.first();
-            if (!hasNext) {
-                return Collections.emptyIterator();
-            }
-        } catch (SQLException e) {
-            throw new DatabaseException("Iterator not supported for streaming query", e);
-        }
         return new SelectIterator();
     }
 
     public class SelectIterator implements Iterator<Row> {
-        private boolean hasNext = true;
+        private final List<Row> backlog = new ArrayList<>(3);
+
+        private void doNext() {
+            boolean nextExists = SelectResult.this.next();
+            if (nextExists) {
+                backlog.add(current);
+            }
+        }
 
         @Override
         public boolean hasNext() {
-            return hasNext;
+            doNext();
+            return !backlog.isEmpty();
         }
 
         @Override
         public Row next() {
-            hasNext = SelectResult.this.next();
-            return current;
+            doNext();
+            if (backlog.isEmpty()) {
+                throw new NoSuchElementException();
+            }
+            return backlog.remove(0);
         }
     }
 

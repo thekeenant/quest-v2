@@ -1,5 +1,6 @@
 package net.avicus.quest.query.select;
 
+import net.avicus.quest.database.DatabaseConnection;
 import net.avicus.quest.query.QueryConfig;
 import net.avicus.quest.database.Database;
 import net.avicus.quest.database.DatabaseException;
@@ -9,6 +10,7 @@ import java.sql.SQLException;
 
 public class SelectConfig implements QueryConfig {
     public static SelectConfig DEFAULT = new SelectConfig(false, 5, false);
+    public static SelectConfig ITERATE = new SelectConfig(true, 5, false);
 
     private final boolean iterate;
     private final int timeout;
@@ -27,7 +29,7 @@ public class SelectConfig implements QueryConfig {
         this.poolable = poolable;
     }
 
-    public PreparedStatement createStatement(Database database, String sql) throws DatabaseException {
+    public PreparedStatement createStatement(DatabaseConnection database, String sql) throws DatabaseException {
         try {
             PreparedStatement statement = database.createQueryStatement(sql, this.iterate);
             statement.setQueryTimeout(this.timeout);
