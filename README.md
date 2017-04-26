@@ -1,6 +1,15 @@
 # Quest
-A stupid simple SQL database library for Java that takes advantage of the awesome
-functional features found in Java 8.
+A simple SQL database library for Java that takes advantage of the awesome
+functional features found in Java 8. It is designed to be:
+
+* **Efficient**: Quest is a light-weight abstraction of JDBC that isn't too complex.
+* **Concise**: With a single line you can perform complex operations on a database, taking
+  advantage of Java 8's `Stream`, and functional programming features.
+* **Powerful**: Quest doesn't limit you, you can still do anything you want with your database,
+  even if that means writing raw SQL queries!
+* **Familiar**: Operations in Java using Quest resemble SQL to some degree.
+* **Safe**: It is easy to make Quest do precisely what you want. Any exceptions you may
+  encounter with Quest are designed to be easily handled and resolved.
 
 With Quest you can...
 * Select, insert, delete and update rows in SQL databases (SQLite, MySQL tested).
