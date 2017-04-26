@@ -1,5 +1,18 @@
 # Quest
-A stupid simple SQL database API for Java.
+A stupid simple SQL database library for Java that takes advantage of the awesome
+functional features found in Java 8.
+
+With Quest you can...
+* Select, insert, delete and update rows in SQL databases (SQLite, MySQL tested).
+* Define a schema which can be used to seamlessly manipulate and access database fields.
+* Stream data straight from the database, mapped to a custom model data type.
+* Execute raw SQL queries if you wish.
+* And much more!
+
+Quest is very young and in "alpha" I suppose. It still lacks documentation and features
+will break upon every version iteration.
+
+## Examples
 
 Example model:
 
@@ -25,8 +38,9 @@ public class Users {
         WISE,
         CLEVER,
         ATHLETIC,
-        FUNNY
+        FUNNY;
     }
+
 
     private final Database database;
 
@@ -59,4 +73,14 @@ public class Users {
         return all().stream().map(quality::getRequired);
     }
 }
+```
+
+Elsewhere, if you have a `users` variable...
+
+```java
+// sum of all ages
+int sum = users.ages().sum();
+
+// print all Quality's
+users.qualities().forEach(System.out::println);
 ```

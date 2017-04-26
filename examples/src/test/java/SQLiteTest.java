@@ -23,6 +23,7 @@ public class SQLiteTest {
 
         Users users = new Users(db);
 
+        int agesSum = users.ages().sum()
 
         System.out.println(users.ages().sum());
 
