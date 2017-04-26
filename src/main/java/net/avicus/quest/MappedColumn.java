@@ -1,22 +1,42 @@
 package net.avicus.quest;
 
+import net.avicus.quest.parameter.ObjectParam;
+
 import java.util.Optional;
 import java.util.function.Function;
 
 public class MappedColumn<I, T> extends Column<T> {
     private final String name;
-    private final ColumnMapper<I, T> mapper;
+    private final Function<I, T> mapper;
     private final Function<T, I> reverse;
+    private final Class<I> sqlType;
+    private final Class<T> mappedType;
 
-    public MappedColumn(String name, ColumnMapper<I, T> mapper, Function<T, I> reverse) {
+    public MappedColumn(String name, Class<I> sqlType, Class<T> mappedType, Function<I, T> mapper, Function<T, I> reverse) {
         super(name);
         this.name = name;
+        this.sqlType = sqlType;
+        this.mappedType = mappedType;
         this.mapper = mapper;
         this.reverse = reverse;
     }
 
-    public T toMappedType(Row row, I raw) {
-        return mapper.apply(row, raw);
+    @SuppressWarnings("unchecked")
+    @Override
+    public Param wrapObject(Object object) {
+        if (sqlType.isInstance(object)) {
+            return super.wrapObject(object);
+        }
+        else if (mappedType.isInstance(object)) {
+            I sqlType = fromMappedType((T) object);
+            return new ObjectParam(sqlType);
+        }
+
+        throw new IllegalArgumentException("Cannot use type " + object.getClass().getSimpleName() + " for filter");
+    }
+
+    public T toMappedType(I raw) {
+        return mapper.apply(raw);
     }
 
     public I fromMappedType(T mapped) {
@@ -24,16 +44,18 @@ public class MappedColumn<I, T> extends Column<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public Optional<T> get(Row row) {
-        return row.get(name).asObject().map(obj -> mapper.apply(row, (I) obj));
+    @Override
+    public Optional<T> map(RecordField field) {
+        return field.asObject().map(obj -> toMappedType((I) obj));
     }
 
     @SuppressWarnings("unchecked")
-    public T getRequired(Row row) {
-        return mapper.apply(row, (I) row.get(name).asRequiredObject());
+    @Override
+    public T mapNonNull(RecordField field) {
+        return mapper.apply((I) field.asNonNullObject());
     }
 
-    public static <I, T> MappedColumn<I, T> of(String name, ColumnMapper<I, T> mapper, Function<T, I> reverse) {
-        return new MappedColumn<>(name, mapper, reverse);
+    public static <I, T> MappedColumn<I, T> of(String name, Class<I> sqlType, Class<T> mappedType, Function<I, T> mapper, Function<T, I> reverse) {
+        return new MappedColumn<>(name, sqlType, mappedType, mapper, reverse);
     }
 }

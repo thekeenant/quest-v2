@@ -7,7 +7,7 @@ import java.util.List;
 
 public class ComparisonParam implements Param {
     public static ComparisonParam EQUAL = new ComparisonParam(" = ");
-    public static ComparisonParam NOT_EQUAL = new ComparisonParam(" != "); // same as "<>"
+    public static ComparisonParam NOT_EQUAL = new ComparisonParam(" <> ");
     public static ComparisonParam LESS_THAN = new ComparisonParam(" < ");
     public static ComparisonParam LESS_OR_EQUAL = new ComparisonParam(" <= ");
     public static ComparisonParam NOT_LESS_THAN = new ComparisonParam(" !< ");

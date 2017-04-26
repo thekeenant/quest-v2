@@ -2,7 +2,7 @@ package net.avicus.quest.query.insert;
 
 import net.avicus.quest.Param;
 import net.avicus.quest.ParameterizedString;
-import net.avicus.quest.Row;
+import net.avicus.quest.Record;
 import net.avicus.quest.database.DatabaseConnection;
 import net.avicus.quest.database.DatabaseException;
 import net.avicus.quest.parameter.FieldParam;
@@ -17,8 +17,8 @@ import java.util.*;
 public class Insert implements Query<InsertResult> {
     private final DatabaseConnection database;
     private final FieldParam table;
-    private final List<Row> insertions;
-    private Select select;
+    private final List<Record> insertions;
+    private Select selectQuery;
 
     public Insert(DatabaseConnection database, FieldParam table) {
         this.database = database;
@@ -29,12 +29,12 @@ public class Insert implements Query<InsertResult> {
     public Insert duplicate() {
         Insert copy = new Insert(this.database, this.table);
         copy.insertions.addAll(this.insertions);
-        copy.select = select;
+        copy.selectQuery = selectQuery;
         return copy;
     }
 
-    public Insert insert(Row... insertions) {
-        if (this.select != null) {
+    public Insert with(Record... insertions) {
+        if (this.selectQuery != null) {
             throw new DatabaseException("Select query cannot be combined with insertions");
         }
         Insert query = duplicate();
@@ -47,12 +47,12 @@ public class Insert implements Query<InsertResult> {
             throw new DatabaseException("Insertions cannot be combined with a select insert");
         }
         Insert query = duplicate();
-        query.select = select;
+        query.selectQuery = select;
         return query;
     }
 
     public ParameterizedString build() {
-        if (this.insertions.isEmpty()) {
+        if (this.insertions.isEmpty() && selectQuery == null) {
             throw new DatabaseException("No insertions to be made.");
         }
 
@@ -65,10 +65,10 @@ public class Insert implements Query<InsertResult> {
         parameters.add(this.table);
 
         sb.append(" ");
-        if (this.select == null) {
+        if (this.selectQuery == null) {
             sb.append("(");
             Set<String> columns = new HashSet<>();
-            for (Row insertion : this.insertions) {
+            for (Record insertion : this.insertions) {
                 for (int i = 1; i <= insertion.getColumnCount(); i++) {
                     String column = insertion.getColumnName(i);
                     if (!columns.contains(column)) {
@@ -82,10 +82,10 @@ public class Insert implements Query<InsertResult> {
             sb.append(")");
 
             sb.append(" VALUES ");
-            for (Row insertion : insertions) {
+            for (Record insertion : insertions) {
                 sb.append("(");
                 for (String column : columns) {
-                    Object data = insertion.get(column).asObject().orElse(null);
+                    Object data = insertion.field(column).asObject().orElse(null);
                     Param param = data == null ? NullParam.INSTANCE : new ObjectParam(data);
                     sb.append(param.getParamString());
                     parameters.add(param);
@@ -100,10 +100,23 @@ public class Insert implements Query<InsertResult> {
             sb.deleteCharAt(sb.length() - 1).deleteCharAt(sb.length() - 1);
         }
         else {
-            Param param = select.toParam();
+            // INSERT INTO something (___, ___, ___) ...
+            if (!selectQuery.getColumns().isEmpty()) {
+                sb.append(" (");
+                for (Param param : selectQuery.getColumns()) {
+                    sb.append(param.getParamString());
+                    sb.append(", ");
+                }
+                sb.deleteCharAt(sb.length() - 1).deleteCharAt(sb.length() - 1);
+                parameters.addAll(selectQuery.getColumns());
+                sb.append(") ");
+            }
+            Param param = selectQuery.toParam();
             sb.append(param.getParamString());
             parameters.add(param);
         }
+
+        System.out.println(sb.toString());
 
         return new ParameterizedString(sb.toString(), parameters);
     }

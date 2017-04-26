@@ -12,7 +12,7 @@ functional features found in Java 8. It is designed to be:
   encounter with Quest are designed to be easily handled and resolved.
 
 With Quest you can...
-* Select, insert, delete and update rows in SQL databases (SQLite, MySQL tested).
+* Select, insert, delete and update records in SQL databases (SQLite, MySQL tested).
 * Define a schema which can be used to seamlessly manipulate and access database fields.
 * Stream data straight from the database, mapped to a custom model data type.
 * Execute raw SQL queries if you wish.
@@ -41,7 +41,7 @@ public class net.avicus.quest.Users {
 
     // Maps from a string in the database to a Java enum
     private static final Column<Quality> quality =
-            Column.<String, Quality>of("quality", (row, str) -> Quality.valueOf(str));
+            Column.<String, Quality>of("quality", (record, str) -> Quality.valueOf(str));
 
     enum Quality {
         WISE,

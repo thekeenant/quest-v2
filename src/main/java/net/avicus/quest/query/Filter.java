@@ -50,7 +50,7 @@ public class Filter {
         return dup;
     }
 
-    public Filter invert() {
+    public Filter not() {
         return new Filter(key, value, comparison, ands, ors, !inverted);
     }
 

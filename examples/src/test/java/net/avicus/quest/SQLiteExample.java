@@ -3,8 +3,9 @@ package net.avicus.quest;
 import net.avicus.quest.Users.Quality;
 import net.avicus.quest.database.Database;
 import net.avicus.quest.database.SQLiteUrl;
-import net.avicus.quest.parameter.WildcardParam;
 import org.junit.Test;
+
+import static net.avicus.quest.Functions.count;
 
 public class SQLiteExample {
     @Test
@@ -13,31 +14,17 @@ public class SQLiteExample {
         db.open();
 
         db.rawUpdate("DROP TABLE IF EXISTS users");
-        db.rawUpdate("CREATE TABLE users (id int, name string, age int, quality string)");
+        db.rawUpdate("CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name string, age int, quality string)");
 
         Users users = new Users(db);
 
-        Row keenan = Row.builder()
-                .with(Users.id, 1)
-                .with(Users.age, 19)
-                .with(Users.quality, Quality.WISE)
-                .build();
+        users.insert("Keenan", 19, Quality.WISE);
+        users.insert("Adam", 24, Quality.CLEVER);
+        users.insert("Max", 7, Quality.ATHLETIC);
+        users.insert("Max", 1, Quality.FUNNY);
 
-        Row adam = Row.builder()
-                .with(Users.id, 2)
-                .with(Users.age, 23)
-                .with(Users.quality, Quality.CLEVER)
-                .build();
+        db.insert("users").select(users.all().select(Users.NAME, Users.AGE, Users.QUALITY)).execute();
 
-        users.insert(keenan, adam).execute();
 
-        System.out.println(users.all().select(WildcardParam.INSTANCE.sum()));
-
-        Object num = users.all().select(Users.age.sum()).execute().stream(1).findFirst();
-        System.out.println(num);
-    }
-
-    private String rowMapper(Row user) {
-        return user.get("name").asRequiredString() + " (age " + user.get("age").asRequiredObject() + ")";
     }
 }

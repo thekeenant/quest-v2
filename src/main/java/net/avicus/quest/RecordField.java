@@ -9,14 +9,14 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 
-public class RowField {
+public class RecordField {
     private final Object data;
 
-    public RowField(Object data) {
+    public RecordField(Object data) {
         this.data = data;
     }
 
-    public <T> T asRequired(Class<T> type) {
+    public <T> T asNonNull(Class<T> type) {
         T data = as(type).orElse(null);
         if (data == null) {
             throw new DatabaseException("Unexpected null value.");
@@ -35,124 +35,124 @@ public class RowField {
 
     @SuppressWarnings("unchecked")
     public <T> Optional<T> as(Column<T> type) {
-        return (Optional<T>) as(Object.class);
+        return type.map(this);
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T asRequired(Column<T> type) {
-        return (T) asRequired(Object.class);
+    public <T> T asNonNull(Column<T> type) {
+        return type.mapNonNull(this);
     }
 
     public Optional<Object> asObject() {
         return as(Object.class);
     }
 
-    public Object asRequiredObject() {
-        return asRequired(Object.class);
+    public Object asNonNullObject() {
+        return asNonNull(Object.class);
     }
 
     public Optional<String> asString() {
         return as(String.class);
     }
 
-    public String asRequiredString() {
-        return asRequired(String.class);
+    public String asNonNullString() {
+        return asNonNull(String.class);
     }
 
     public Optional<Date> asDate() {
         return as(Date.class);
     }
 
-    public Date asRequiredDate() {
-        return asRequired(Date.class);
+    public Date asNonNullDate() {
+        return asNonNull(Date.class);
     }
 
     public Optional<Time> asTime() {
         return as(Time.class);
     }
 
-    public Time asRequiredTime() {
-        return asRequired(Time.class);
+    public Time asNonNullTime() {
+        return asNonNull(Time.class);
     }
 
     public Optional<Timestamp> asTimestamp() {
         return as(Timestamp.class);
     }
 
-    public Timestamp asRequiredTimestamp() {
-        return asRequired(Timestamp.class);
+    public Timestamp asNonNullTimestamp() {
+        return asNonNull(Timestamp.class);
     }
 
     public Optional<Boolean> asBoolean() {
-        return as(Object.class).map(RowField::booleanValue);
+        return as(Object.class).map(RecordField::booleanValue);
     }
 
-    public boolean asRequiredBoolean() {
-        return booleanValue(asRequired(Object.class));
+    public boolean asNonNullBoolean() {
+        return booleanValue(asNonNull(Object.class));
     }
 
     public Optional<Integer> asInteger() {
         return as(Integer.class);
     }
 
-    public int asRequiredInteger() {
-        return asRequired(Integer.class);
+    public int asNonNullInteger() {
+        return asNonNull(Integer.class);
     }
 
     public Optional<Long> asLong() {
         return as(Long.class);
     }
 
-    public long asRequiredLong() {
-        return asRequired(Long.class);
+    public long asNonNullLong() {
+        return asNonNull(Long.class);
     }
 
     public Optional<Float> asFloat() {
         return as(Float.class);
     }
 
-    public float asRequiredFloat() {
-        return asRequired(Float.class);
+    public float asNonNullFloat() {
+        return asNonNull(Float.class);
     }
 
     public Optional<Double> asDouble() {
         return as(Double.class);
     }
 
-    public double asRequiredDouble() {
-        return asRequired(Double.class);
+    public double asNonNullDouble() {
+        return asNonNull(Double.class);
     }
 
     public Optional<Short> asShort() {
         return as(Short.class);
     }
 
-    public short asRequiredShort() {
-        return asRequired(Short.class);
+    public short asNonNullShort() {
+        return asNonNull(Short.class);
     }
 
     public Optional<Byte> asByte() {
         return as(Byte.class);
     }
 
-    public byte asRequiredByte() {
-        return asRequired(Byte.class);
+    public byte asNonNullByte() {
+        return asNonNull(Byte.class);
     }
 
     public Optional<BigDecimal> asBigDecimal() {
         return as(BigDecimal.class);
     }
 
-    public BigDecimal asRequiredBigDecimal() {
-        return asRequired(BigDecimal.class);
+    public BigDecimal asNonNullBigDecimal() {
+        return asNonNull(BigDecimal.class);
     }
 
     public Optional<Number> asNumber() {
         return as(Number.class);
     }
 
-    public Number asRequiredNumber() {
-        return asRequired(Number.class);
+    public Number asNonNullNumber() {
+        return asNonNull(Number.class);
     }
 
     @Override

@@ -25,6 +25,14 @@ public interface Param {
      */
     List<Object> getValues();
 
+    default Param wrapObject(Object object) {
+        return new ObjectParam(object);
+    }
+
+    default DistinctParam distinct() {
+        return new DistinctParam(this);
+    }
+
     default DirectionalParam asc() {
         return new DirectionalParam(this, Direction.ASC);
     }
@@ -66,7 +74,7 @@ public interface Param {
     }
 
     default ModuloParam mod(Object other) {
-        return mod(new ObjectParam(other));
+        return mod(wrapObject(other));
     }
 
     default Filter like(Param other) {
@@ -74,15 +82,15 @@ public interface Param {
     }
 
     default Filter like(Object other) {
-        return like(new ObjectParam(other));
+        return like(wrapObject(other));
     }
 
     default Filter equalIgnoreCase(Param other) {
-        return Filter.of(lower(), lower(), ComparisonParam.EQUAL);
+        return Filter.of(lower(), other.lower(), ComparisonParam.EQUAL);
     }
 
     default Filter equalIgnoreCase(Object other) {
-        return equalIgnoreCase(new ObjectParam(other));
+        return equalIgnoreCase(wrapObject(other));
     }
 
     default Filter equal(Param other) {
@@ -90,7 +98,7 @@ public interface Param {
     }
 
     default Filter equal(Object other) {
-        return equal(new ObjectParam(other));
+        return equal(wrapObject(other));
     }
 
     default Filter eq(Param other) {
@@ -98,7 +106,7 @@ public interface Param {
     }
 
     default Filter eq(Object other) {
-        return equal(other);
+        return equal(wrapObject(other));
     }
 
     default Filter binaryEqual(Param other) {
@@ -106,7 +114,7 @@ public interface Param {
     }
 
     default Filter binaryEqual(Object other) {
-        return binaryEqual(new ObjectParam(other));
+        return binaryEqual(wrapObject(other));
     }
 
     default Filter notEqual(Param other) {
@@ -114,7 +122,7 @@ public interface Param {
     }
 
     default Filter notEqual(Object other) {
-        return notEqual(new ObjectParam(other));
+        return notEqual(wrapObject(other));
     }
 
     default Filter ne(Param other) {
@@ -130,7 +138,7 @@ public interface Param {
     }
 
     default Filter lessThan(Object other) {
-        return lessThan(new ObjectParam(other));
+        return lessThan(wrapObject(other));
     }
 
     default Filter lt(Param other) {
@@ -146,7 +154,7 @@ public interface Param {
     }
 
     default Filter lessOrEqual(Object other) {
-        return lessOrEqual(new ObjectParam(other));
+        return lessOrEqual(wrapObject(other));
     }
 
     default Filter le(Param other) {
@@ -162,7 +170,7 @@ public interface Param {
     }
 
     default Filter greaterThan(Object other) {
-        return greaterThan(new ObjectParam(other));
+        return greaterThan(wrapObject(other));
     }
 
     default Filter gt(Param other) {
@@ -178,7 +186,7 @@ public interface Param {
     }
 
     default Filter greaterOrEqual(Object other) {
-        return greaterOrEqual(new ObjectParam(other));
+        return greaterOrEqual(wrapObject(other));
     }
 
     default Filter ge(Param other) {

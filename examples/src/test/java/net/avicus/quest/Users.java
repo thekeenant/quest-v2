@@ -1,17 +1,21 @@
 package net.avicus.quest;
 
 import net.avicus.quest.database.Database;
-import net.avicus.quest.query.insert.Insert;
 import net.avicus.quest.query.select.Select;
 
-import java.util.stream.IntStream;
+import java.util.Optional;
 import java.util.stream.Stream;
 
+import static net.avicus.quest.Functions.count;
+
 public class Users {
-    public static final Column<Integer> id = Column.of("id");
-    public static final Column<String> name = Column.of("name");
-    public static final Column<Integer> age = Column.of("age");
-    public static final MappedColumn<String, Quality> quality = MappedColumn.of("quality", Quality::valueOf, Quality::name);
+    public static final Column<Integer> ID = Column.of("id");
+    public static final Column<String> NAME = Column.of("name");
+    public static final Column<Integer> AGE = Column.of("age");
+    public static final MappedColumn<String, Quality> QUALITY = MappedColumn.of(
+            "quality",
+            String.class, Quality.class,
+            Quality::valueOf, Quality::name);
 
     private final Database database;
 
@@ -19,19 +23,20 @@ public class Users {
         WISE,
         CLEVER,
         ATHLETIC,
-        FUNNY;
-
-        public static Quality valueOf(Row row, String quality) {
-            return valueOf(quality);
-        }
+        FUNNY
     }
 
     public Users(Database database) {
         this.database = database;
     }
 
-    public Insert insert(Row... rows) {
-        return database.insert("users").insert(rows);
+    public void insert(String name, int age, Quality quality) {
+        Record record = Record.builder()
+                .with(Users.NAME, name)
+                .with(Users.AGE, age)
+                .with(Users.QUALITY, quality)
+                .build();
+        database.insert("users").with(record).execute();
     }
 
     public Select all() {
@@ -39,18 +44,14 @@ public class Users {
     }
 
     public Select elderly() {
-        return all().where(age.greaterThan(70));
+        return all().where(AGE.gt(70));
     }
 
-    public Select evenAges() {
-        return all().where(age.mod(2).eq(0));
+    public int sumAges() {
+        return all().select(count()).execute().fetchOne(1).asNonNullInteger();
     }
 
-    public IntStream ages() {
-        return all().execute().stream().map(age::getRequired).mapToInt(Integer::intValue);
-    }
-
-    public Stream<Quality> qualities() {
-        return all().execute().stream().map(quality::getRequired);
+    public Stream<Optional<Quality>> qualities() {
+        return all().execute().stream().map(QUALITY::map);
     }
 }

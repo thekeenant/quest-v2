@@ -9,7 +9,7 @@ public class DirectionalParam implements Param {
     private final Direction direction;
 
     public DirectionalParam(String column) {
-        this(column, Direction.ASC);
+        this(new FieldParam(column));
     }
 
     public DirectionalParam(String column, Direction direction) {
@@ -23,6 +23,14 @@ public class DirectionalParam implements Param {
     public DirectionalParam(Param child, Direction direction) {
         this.child = child;
         this.direction = direction;
+    }
+
+    public DirectionalParam(int field, Direction direction) {
+        this(new ObjectParam(field), direction);
+    }
+
+    public DirectionalParam(int field) {
+        this(new ObjectParam(field));
     }
 
     @Override

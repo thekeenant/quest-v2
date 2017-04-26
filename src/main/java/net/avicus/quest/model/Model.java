@@ -1,7 +1,7 @@
 package net.avicus.quest.model;
 
-import net.avicus.quest.Row;
+import net.avicus.quest.Record;
 
 public interface Model {
-    Row toRow();
+    Record toRow();
 }

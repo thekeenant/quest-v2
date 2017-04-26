@@ -25,7 +25,6 @@ public class Select implements Query<SelectResult>, Filterable<Select> {
     private List<Param> columns;
     private Param offset;
     private Param limit;
-    private Param groupBy;
     private List<Param> order;
     private CustomParam join;
 
@@ -34,15 +33,22 @@ public class Select implements Query<SelectResult>, Filterable<Select> {
         this.table = table;
     }
 
+    public List<Param> getColumns() {
+        return Collections.unmodifiableList(columns);
+    }
+
+    protected void copy(Select from) {
+        filter = from.filter;
+        columns = from.columns == null ? null : new ArrayList<>(from.columns);
+        offset = from.offset;
+        limit = from.limit;
+        order = from.order;
+        join = from.join;
+    }
+
     public Select duplicate() {
         Select copy = new Select(this.database, this.table);
-        copy.filter = this.filter;
-        copy.columns = this.columns == null ? null : new ArrayList<>(this.columns);
-        copy.offset = this.offset;
-        copy.limit = this.limit;
-        copy.groupBy = this.groupBy;
-        copy.order = this.order;
-        copy.join = this.join;
+        copy.copy(this);
         return copy;
     }
 
@@ -85,12 +91,6 @@ public class Select implements Query<SelectResult>, Filterable<Select> {
 
     public Select select(Param... columns) {
         return select(Arrays.asList(columns));
-    }
-
-    public Select groupBy(Param groupBy) {
-        Select select = duplicate();
-        select.groupBy = groupBy;
-        return select;
     }
 
     public Select offset(int offset) {
@@ -175,12 +175,6 @@ public class Select implements Query<SelectResult>, Filterable<Select> {
             parameters.addAll(filterString.getParameters());
         }
 
-        if (this.groupBy != null) {
-            sb.append(" GROUP BY ");
-            sb.append(this.groupBy.getParamString());
-            parameters.add(this.groupBy);
-        }
-
         if (this.order != null) {
             sb.append(" ORDER BY ");
             for (Param order : this.order) {
@@ -208,16 +202,16 @@ public class Select implements Query<SelectResult>, Filterable<Select> {
         return execute(false);
     }
 
-    public SelectResult execute(boolean iterate) {
-        return execute(iterate, null);
+    public SelectResult execute(boolean lazy) {
+        return execute(lazy, null);
     }
 
-    public SelectResult execute(boolean iterate, Integer timeout) throws DatabaseException {
+    public SelectResult execute(boolean lazy, Integer timeout) throws DatabaseException {
         // The query
         ParameterizedString query = build();
 
         // Create statement
-        PreparedStatement statement = database.createQueryStatement(query.getSql(), iterate, timeout);
+        PreparedStatement statement = database.createQueryStatement(query.getSql(), lazy, timeout);
 
         // Add variables (?, ?)
         query.apply(statement, 1);

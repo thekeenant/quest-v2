@@ -134,13 +134,13 @@ public abstract class DatabaseConnection {
         }
     }
 
-    public PreparedStatement createQueryStatement(String sql, boolean iterate, Integer timeout) throws DatabaseException {
+    public PreparedStatement createQueryStatement(String sql, boolean lazy, Integer timeout) throws DatabaseException {
         Connection conn = getConnection().orElseThrow(() -> new DatabaseException("Not connected"));
 
         try {
             PreparedStatement statement;
 
-            if (iterate) {
+            if (lazy) {
                 statement = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
                 statement.setFetchSize(Integer.MIN_VALUE);
             }
@@ -156,7 +156,7 @@ public abstract class DatabaseConnection {
 
             return statement;
         } catch (SQLException e) {
-            throw new DatabaseException(e);
+            throw new DatabaseException("Error with statement: \"" + sql + "\"", e);
         }
     }
 }

@@ -1,7 +1,7 @@
 package net.avicus.quest.query.select;
 
-import net.avicus.quest.Row;
-import net.avicus.quest.RowField;
+import net.avicus.quest.Record;
+import net.avicus.quest.RecordField;
 import net.avicus.quest.database.DatabaseException;
 import net.avicus.quest.query.QueryResult;
 
@@ -15,8 +15,10 @@ import java.util.stream.StreamSupport;
 public class SelectResult implements QueryResult {
     private final ResultSet set;
     private final List<String> columns;
+
+    private Record current;
     private boolean started;
-    private Row current;
+    private boolean invalidated;
 
     public SelectResult(ResultSet set, List<String> columns) {
         this.set = set;
@@ -24,78 +26,109 @@ public class SelectResult implements QueryResult {
     }
 
     public int getColumnNumber(String columnName) {
-        if (!this.columns.contains(columnName)) {
-            throw new DatabaseException("Column not present: " + columnName + ".");
+        if (!columns.contains(columnName)) {
+            throw new DatabaseException("Column not present: " + columnName);
         }
 
-        return this.columns.indexOf(columnName) + 1;
+        return columns.indexOf(columnName) + 1;
     }
 
     public int getColumnCount() {
-        return this.columns.size();
+        return columns.size();
     }
 
     public List<String> getColumnNames() {
-        return this.columns;
+        return columns;
     }
 
     public boolean isStarted() {
-        return this.started;
+        return started;
     }
 
-    public boolean next() throws DatabaseException {
+    public boolean isInvalidated() {
+        return invalidated;
+    }
+
+    public boolean next() {
+        return next(false);
+    }
+
+    private boolean next(boolean ignoreInvalidation) throws DatabaseException {
+        if (!ignoreInvalidation) {
+            checkNotInvalidated();
+        }
+
         try {
             this.started = true;
             boolean next = this.set.next();
-            this.current = next ? Row.fromSelectResultSet(this, this.set) : null;
+            this.current = next ? Record.fromSelectResultSet(this, this.set) : null;
             return next;
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
     }
 
-    public Row getCurrent() {
+    public Record getCurrent() {
+        checkNotInvalidated();
+
         if (this.current == null) {
             throw new DatabaseException("Now row is present.");
         }
         return this.current;
     }
 
-    public List<Row> toList() {
+    public List<Record> toList() {
         checkNotStarted();
 
-        List<Row> rows = new ArrayList<>();
+        List<Record> records = new ArrayList<>();
         while (next()) {
-            rows.add(getCurrent());
+            records.add(getCurrent());
         }
 
-        return rows;
+        return records;
     }
 
     private void checkNotStarted() {
         if (isStarted()) {
-            throw new DatabaseException("Select was already started.");
+            throw new DatabaseException("Result was already started.");
         }
     }
 
-    public Stream<RowField> stream(int field) throws DatabaseException {
+    private void checkNotInvalidated() {
+        if (isInvalidated()) {
+            throw new DatabaseException("Result has been invalidated.");
+        }
+    }
+
+    public Record fetchOne() {
+        return iterator().next();
+    }
+
+    public RecordField fetchOne(int field) {
+        return iterator(field).next();
+    }
+
+    public Stream<RecordField> stream(int field) throws DatabaseException {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator(field), Spliterator.ORDERED), false);
     }
 
-    public Stream<Row> stream() throws DatabaseException {
+    public Stream<Record> stream() throws DatabaseException {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator(), Spliterator.ORDERED), false);
     }
 
-    public Iterator<RowField> iterator(int field) throws DatabaseException {
+    public Iterator<RecordField> iterator(int field) throws DatabaseException {
         return new SelectFieldIterator(field);
     }
 
-    public Iterator<Row> iterator() throws DatabaseException {
-        checkNotStarted();
+    public Iterator<Record> iterator() throws DatabaseException {
         return new SelectIterator();
     }
 
-    public class SelectFieldIterator implements Iterator<RowField> {
+    private void invalidate() {
+        invalidated = true;
+    }
+
+    public class SelectFieldIterator implements Iterator<RecordField> {
         private final int field;
         private final SelectIterator iterator;
 
@@ -110,16 +143,22 @@ public class SelectResult implements QueryResult {
         }
 
         @Override
-        public RowField next() {
-            return iterator.next().get(field);
+        public RecordField next() {
+            return iterator.next().field(field);
         }
     }
 
-    public class SelectIterator implements Iterator<Row> {
-        private final List<Row> backlog = new ArrayList<>(3);
+    private class SelectIterator implements Iterator<Record> {
+        private final List<Record> backlog = new ArrayList<>(3);
+
+        public SelectIterator() {
+            checkNotStarted();
+            checkNotInvalidated();
+            SelectResult.this.invalidate();
+        }
 
         private void doNext() {
-            boolean nextExists = SelectResult.this.next();
+            boolean nextExists = SelectResult.this.next(true);
             if (nextExists) {
                 backlog.add(current);
             }
@@ -132,7 +171,7 @@ public class SelectResult implements QueryResult {
         }
 
         @Override
-        public Row next() {
+        public Record next() {
             doNext();
             if (backlog.isEmpty()) {
                 throw new NoSuchElementException();
