@@ -1,5 +1,7 @@
-import net.avicus.quest.Column;
+package net.avicus.quest;
+
 import net.avicus.quest.database.Database;
+import net.avicus.quest.query.insert.Insert;
 import net.avicus.quest.query.select.Select;
 
 import java.util.stream.IntStream;
@@ -9,9 +11,7 @@ public class Users {
     public static final Column<Integer> id = Column.of("id");
     public static final Column<String> name = Column.of("name");
     public static final Column<Integer> age = Column.of("age");
-
-    public static final Column<Quality> quality =
-            Column.<String, Quality>of("quality", (row, str) -> Quality.valueOf(str));
+    public static final MappedColumn<String, Quality> quality = MappedColumn.of("quality", Quality::valueOf, Quality::name);
 
     private final Database database;
 
@@ -19,11 +19,19 @@ public class Users {
         WISE,
         CLEVER,
         ATHLETIC,
-        FUNNY
+        FUNNY;
+
+        public static Quality valueOf(Row row, String quality) {
+            return valueOf(quality);
+        }
     }
 
     public Users(Database database) {
         this.database = database;
+    }
+
+    public Insert insert(Row... rows) {
+        return database.insert("users").insert(rows);
     }
 
     public Select all() {

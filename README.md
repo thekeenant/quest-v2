@@ -33,7 +33,7 @@ import net.avicus.quest.query.select.Select;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class Users {
+public class net.avicus.quest.Users {
     // Schema at the top
     private static final Column<Integer> id = Column.of("id");
     private static final Column<String> name = Column.of("name");
@@ -53,7 +53,7 @@ public class Users {
 
     private final Database database;
 
-    public Users(Database database) {
+    public net.avicus.quest.Users(Database database) {
         this.database = database;
     }
 

@@ -148,12 +148,20 @@ public class Row {
             this.values = new HashMap<>();
         }
 
-        public RowBuilder value(String column, Object value) {
+        public <T> RowBuilder with(Column<T> column, T value) {
+            return with(column.getName(), value);
+        }
+
+        public <I, T> RowBuilder with(MappedColumn<I, T> column, T value) {
+            return with(column.getName(), column.fromMappedType(value));
+        }
+
+        public RowBuilder with(String column, Object value) {
             this.values.put(column, new RowField(value));
             return this;
         }
 
-        public RowBuilder values(Map<String, Object> values) {
+        public RowBuilder with(Map<String, Object> values) {
             for (Entry<String, Object> entry : values.entrySet()) {
                 this.values.put(entry.getKey(), new RowField(entry.getValue()));
             }

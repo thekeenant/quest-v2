@@ -1,10 +1,9 @@
-import net.avicus.quest.Row;
+package net.avicus.quest;
+
+import net.avicus.quest.Users.Quality;
 import net.avicus.quest.database.Database;
 import net.avicus.quest.database.SQLiteUrl;
 import net.avicus.quest.parameter.WildcardParam;
-import net.avicus.quest.query.insert.Insertion;
-import net.avicus.quest.query.select.Select;
-import net.avicus.quest.Column;
 import org.junit.Test;
 
 public class SQLiteExample {
@@ -16,13 +15,21 @@ public class SQLiteExample {
         db.rawUpdate("DROP TABLE IF EXISTS users");
         db.rawUpdate("CREATE TABLE users (id int, name string, age int, quality string)");
 
-        Insertion insertion = Insertion.builder().value("id", 1).value("age", 19).value("name", "Keenan").value("quality", "WISE").build();
-        db.insert("users").insert(insertion).execute();
-
-        insertion = Insertion.builder().value("id", 2).value("age", 23).value("name", "Adam").value("quality", "WISE").build();
-        db.insert("users").insert(insertion).execute();
-
         Users users = new Users(db);
+
+        Row keenan = Row.builder()
+                .with(Users.id, 1)
+                .with(Users.age, 19)
+                .with(Users.quality, Quality.WISE)
+                .build();
+
+        Row adam = Row.builder()
+                .with(Users.id, 2)
+                .with(Users.age, 23)
+                .with(Users.quality, Quality.CLEVER)
+                .build();
+
+        users.insert(keenan, adam).execute();
 
         System.out.println(users.all().select(WildcardParam.INSTANCE.sum()));
 

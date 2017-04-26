@@ -61,6 +61,6 @@ public class ParameterizedString {
 
     @Override
     public String toString() {
-        return "ParameterizedString(sql=" + this.sql + ", parameters=" + this.parameters + ")";
+        return "ParameterizedString(sql=\"" + this.sql + "\", parameters=" + this.parameters + ")";
     }
 }

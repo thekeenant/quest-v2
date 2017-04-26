@@ -2,22 +2,22 @@ package net.avicus.quest.query.insert;
 
 import net.avicus.quest.Param;
 import net.avicus.quest.ParameterizedString;
+import net.avicus.quest.Row;
 import net.avicus.quest.database.DatabaseConnection;
 import net.avicus.quest.database.DatabaseException;
 import net.avicus.quest.parameter.FieldParam;
+import net.avicus.quest.parameter.NullParam;
+import net.avicus.quest.parameter.ObjectParam;
 import net.avicus.quest.query.Query;
 import net.avicus.quest.query.select.Select;
 
 import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Insert implements Query<InsertResult> {
     private final DatabaseConnection database;
     private final FieldParam table;
-    private final List<Insertion> insertions;
+    private final List<Row> insertions;
     private Select select;
 
     public Insert(DatabaseConnection database, FieldParam table) {
@@ -33,18 +33,18 @@ public class Insert implements Query<InsertResult> {
         return copy;
     }
 
-    public Insert insert(Insertion insertion) {
+    public Insert insert(Row... insertions) {
         if (this.select != null) {
-            throw new DatabaseException("Select query cannot be combined insert insertion values.");
+            throw new DatabaseException("Select query cannot be combined with insertions");
         }
         Insert query = duplicate();
-        query.insertions.add(insertion);
+        query.insertions.addAll(Arrays.asList(insertions));
         return query;
     }
 
     public Insert select(Select select) {
         if (!this.insertions.isEmpty()) {
-            throw new DatabaseException("Insertion values cannot be combined insert select query.");
+            throw new DatabaseException("Insertions cannot be combined with a select insert");
         }
         Insert query = duplicate();
         query.select = select;
@@ -68,8 +68,9 @@ public class Insert implements Query<InsertResult> {
         if (this.select == null) {
             sb.append("(");
             Set<String> columns = new HashSet<>();
-            for (Insertion insertion : this.insertions) {
-                for (String column : insertion.getColumns()) {
+            for (Row insertion : this.insertions) {
+                for (int i = 1; i <= insertion.getColumnCount(); i++) {
+                    String column = insertion.getColumnName(i);
                     if (!columns.contains(column)) {
                         columns.add(column);
                         sb.append("`").append(column).append("`");
@@ -81,17 +82,22 @@ public class Insert implements Query<InsertResult> {
             sb.append(")");
 
             sb.append(" VALUES ");
-            for (Insertion insertion : this.insertions) {
+            for (Row insertion : insertions) {
                 sb.append("(");
                 for (String column : columns) {
-                    Param value = insertion.getValue(column);
-                    sb.append(value.getParamString());
-                    parameters.add(value);
+                    Object data = insertion.get(column).asObject().orElse(null);
+                    Param param = data == null ? NullParam.INSTANCE : new ObjectParam(data);
+                    sb.append(param.getParamString());
+                    parameters.add(param);
                     sb.append(", ");
                 }
+                // remove last comma
                 sb.deleteCharAt(sb.length() - 1).deleteCharAt(sb.length() - 1);
-                sb.append(")");
+                sb.append("), ");
             }
+
+            // remove last comma
+            sb.deleteCharAt(sb.length() - 1).deleteCharAt(sb.length() - 1);
         }
         else {
             Param param = select.toParam();
