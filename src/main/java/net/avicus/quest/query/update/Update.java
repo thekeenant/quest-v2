@@ -9,13 +9,12 @@ import net.avicus.quest.parameter.FieldParam;
 import net.avicus.quest.parameter.ObjectParam;
 import net.avicus.quest.query.Filter;
 import net.avicus.quest.query.Filterable;
-import net.avicus.quest.query.Query;
 
 import java.sql.PreparedStatement;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class Update implements Query<UpdateResult>, Filterable<Update> {
+public class Update implements Filterable<Update> {
     private final DatabaseConnection database;
     private final FieldParam table;
     private final Map<String, Param> changes;
@@ -141,7 +140,6 @@ public class Update implements Query<UpdateResult>, Filterable<Update> {
         return new ParameterizedString(sb.toString(), parameters);
     }
 
-    @Override
     public UpdateResult execute() throws DatabaseException {
         // The query
         ParameterizedString query = build();

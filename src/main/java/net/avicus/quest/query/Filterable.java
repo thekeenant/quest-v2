@@ -7,9 +7,9 @@ import net.avicus.quest.parameter.ObjectParam;
 
 /**
  * Something that can be where'd of course.
- * @param <C> The resulting object.
+ * @param <C> Itself.
  */
-public interface Filterable<C extends Query> {
+public interface Filterable<C> {
     C where(Filter filter);
 
     default C where(String column, Object value) {

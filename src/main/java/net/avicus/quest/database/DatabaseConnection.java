@@ -6,7 +6,6 @@ import net.avicus.quest.query.delete.DeleteResult;
 import net.avicus.quest.query.insert.Insert;
 import net.avicus.quest.query.insert.InsertResult;
 import net.avicus.quest.query.select.Select;
-import net.avicus.quest.query.select.SelectResult;
 import net.avicus.quest.query.update.Update;
 import net.avicus.quest.query.update.UpdateResult;
 
@@ -108,21 +107,22 @@ public abstract class DatabaseConnection {
         return select(new FieldParam(table));
     }
 
-    public SelectResult rawSelect(String sql, boolean iterate, int timeout, Object... data) {
-        return rawSelect(sql, Arrays.asList(data), iterate, timeout);
-    }
-
-    public SelectResult rawSelect(String sql, List<Object> data, boolean iterate, int timeout) {
-        PreparedStatement statement = createQueryStatement(sql, iterate, timeout);
-        for (int i = 0; i < data.size(); i++) {
-            try {
-                statement.setObject(i + 1, data.get(i));
-            } catch (SQLException e) {
-                throw new DatabaseException(e);
-            }
-        }
-        return SelectResult.execute(statement);
-    }
+    // TODO
+//    public SelectResult rawSelect(String sql, boolean iterate, int timeout, Object... data) {
+//        return rawSelect(sql, Arrays.asList(data), iterate, timeout);
+//    }
+//
+//    public SelectResult rawSelect(String sql, List<Object> data, boolean iterate, int timeout) {
+//        PreparedStatement statement = createQueryStatement(sql, iterate, timeout);
+//        for (int i = 0; i < data.size(); i++) {
+//            try {
+//                statement.setObject(i + 1, data.get(i));
+//            } catch (SQLException e) {
+//                throw new DatabaseException(e);
+//            }
+//        }
+//        return SelectResult.execute(statement);
+//    }
 
     public PreparedStatement createUpdateStatement(String sql) {
         Connection conn = getConnection().orElseThrow(() -> new DatabaseException("Not connected"));

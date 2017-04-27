@@ -1,7 +1,6 @@
 package net.avicus.quest.query.insert;
 
 import net.avicus.quest.Record;
-import net.avicus.quest.query.QueryResult;
 import net.avicus.quest.database.DatabaseException;
 
 import java.sql.PreparedStatement;
@@ -9,11 +8,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
 
-public class InsertResult implements QueryResult {
+public class InsertResult {
     private final int result;
-    private final Optional<Record> generated;
+    private final Record generated;
 
-    public InsertResult(int result, Optional<Record> generated) {
+    public InsertResult(int result, Record generated) {
         this.result = result;
         this.generated = generated;
     }
@@ -23,17 +22,18 @@ public class InsertResult implements QueryResult {
     }
 
     public Optional<Record> getGenerated() {
-        return this.generated;
+        return Optional.ofNullable(this.generated);
     }
 
     public static InsertResult execute(PreparedStatement statement) throws DatabaseException {
         try {
             int result = statement.executeUpdate();
-            Optional<Record> generated = Optional.empty();
+            Record generated = null;
             ResultSet set = statement.getGeneratedKeys();
             if (set != null) {
                 set.next();
-                generated = Optional.of(Record.fromResultSet(set));
+                // Todo:
+//                generated = Optional.of(Record.fromResultSet(set));
             }
             return new InsertResult(result, generated);
         } catch (SQLException e) {

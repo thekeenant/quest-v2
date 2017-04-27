@@ -10,15 +10,15 @@ import net.avicus.quest.parameter.ObjectParam;
 import net.avicus.quest.parameter.WildcardParam;
 import net.avicus.quest.query.Filter;
 import net.avicus.quest.query.Filterable;
-import net.avicus.quest.query.Query;
 
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class Select implements Query<SelectResult>, Filterable<Select> {
+public class Select implements Filterable<Select> {
     private final DatabaseConnection database;
     private final FieldParam table;
     private Filter filter;
@@ -33,11 +33,7 @@ public class Select implements Query<SelectResult>, Filterable<Select> {
         this.table = table;
     }
 
-    public List<Param> getColumns() {
-        return Collections.unmodifiableList(columns);
-    }
-
-    protected void copy(Select from) {
+    private void copy(Select from) {
         filter = from.filter;
         columns = from.columns == null ? null : new ArrayList<>(from.columns);
         offset = from.offset;
@@ -46,7 +42,7 @@ public class Select implements Query<SelectResult>, Filterable<Select> {
         join = from.join;
     }
 
-    public Select duplicate() {
+    private Select duplicate() {
         Select copy = new Select(this.database, this.table);
         copy.copy(this);
         return copy;
@@ -198,15 +194,15 @@ public class Select implements Query<SelectResult>, Filterable<Select> {
         return new ParameterizedString(sb.toString(), parameters);
     }
 
-    public SelectResult execute() {
+    public Cursor execute() throws DatabaseException {
         return execute(false);
     }
 
-    public SelectResult execute(boolean lazy) {
+    public Cursor execute(boolean lazy) throws DatabaseException {
         return execute(lazy, null);
     }
 
-    public SelectResult execute(boolean lazy, Integer timeout) throws DatabaseException {
+    public Cursor execute(boolean lazy, Integer timeout) throws DatabaseException {
         // The query
         ParameterizedString query = build();
 
@@ -216,7 +212,11 @@ public class Select implements Query<SelectResult>, Filterable<Select> {
         // Add variables (?, ?)
         query.apply(statement, 1);
 
-        return SelectResult.execute(statement);
+        try {
+            return new Cursor(statement, statement.executeQuery());
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
     @Override

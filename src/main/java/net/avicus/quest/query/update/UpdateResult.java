@@ -1,12 +1,11 @@
 package net.avicus.quest.query.update;
 
-import net.avicus.quest.query.QueryResult;
 import net.avicus.quest.database.DatabaseException;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-public class UpdateResult implements QueryResult {
+public class UpdateResult {
     private final int result;
 
     public UpdateResult(int result) {

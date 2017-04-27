@@ -9,14 +9,13 @@ import net.avicus.quest.parameter.FieldParam;
 import net.avicus.quest.parameter.ObjectParam;
 import net.avicus.quest.query.Filter;
 import net.avicus.quest.query.Filterable;
-import net.avicus.quest.query.Query;
 
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Delete implements Query<DeleteResult>, Filterable<Delete> {
+public class Delete implements Filterable<Delete> {
     private final DatabaseConnection database;
     private final FieldParam table;
     private Filter filter;
@@ -112,16 +111,12 @@ public class Delete implements Query<DeleteResult>, Filterable<Delete> {
         return new ParameterizedString(sb.toString(), parameters);
     }
 
-    @Override
     public DeleteResult execute() throws DatabaseException {
         // The query
         ParameterizedString query = build();
 
         // Create statement
         PreparedStatement statement = database.createUpdateStatement(query.getSql());
-
-
-        System.out.println(build());
 
         // Add variables (?, ?)
         query.apply(statement, 1);

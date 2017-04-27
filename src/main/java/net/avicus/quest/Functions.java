@@ -2,6 +2,7 @@ package net.avicus.quest;
 
 import net.avicus.quest.parameter.AvgParam;
 import net.avicus.quest.parameter.CountParam;
+import net.avicus.quest.parameter.SumParam;
 import net.avicus.quest.parameter.WildcardParam;
 
 /**
@@ -26,6 +27,14 @@ public class Functions {
 
     public static CountParam count(String column) {
         return new CountParam(column);
+    }
+
+    public static SumParam sum(Param param) {
+        return new SumParam(param);
+    }
+
+    public static SumParam sum(String exp) {
+        return new SumParam(exp);
     }
 
     public static WildcardParam wildcard() {

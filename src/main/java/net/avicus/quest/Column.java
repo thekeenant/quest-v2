@@ -19,22 +19,13 @@ public class Column<T> extends FieldParam {
     }
 
     @SuppressWarnings("unchecked")
-    public Optional<T> map(RecordField field) {
-        return field.asObject().map(obj -> (T) obj);
-    }
-
-    public final Optional<T> map(Record record) {
-        return map(record.field(name));
+    public Optional<T> map(Record field) {
+        return field.getObject(name).map(obj -> (T) obj);
     }
 
     @SuppressWarnings("unchecked")
-    public T mapNonNull(RecordField field) {
-        return (T) field.asNonNullObject();
-    }
-
-    @SuppressWarnings("unchecked")
-    public final T mapNonNull(Record record) {
-        return mapNonNull(record.field(name));
+    public T mapNonNull(Record field) {
+        return (T) field.getNonNullObject(name);
     }
 
     public String getName() {

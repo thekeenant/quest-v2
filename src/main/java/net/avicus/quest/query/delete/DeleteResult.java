@@ -1,12 +1,11 @@
 package net.avicus.quest.query.delete;
 
-import net.avicus.quest.query.QueryResult;
 import net.avicus.quest.database.DatabaseException;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-public class DeleteResult implements QueryResult {
+public class DeleteResult {
     private final int result;
 
     public DeleteResult(int result) {

@@ -1,30 +1,47 @@
 package net.avicus.quest;
 
-import net.avicus.quest.Users.Quality;
 import net.avicus.quest.database.Database;
 import net.avicus.quest.database.SQLiteUrl;
+import net.avicus.quest.query.select.Cursor;
+import net.avicus.quest.query.select.Select;
 import org.junit.Test;
 
-import static net.avicus.quest.Functions.count;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
+import static net.avicus.quest.Functions.sum;
 
 public class SQLiteExample {
     @Test
     public void db() {
         Database db = new Database(SQLiteUrl.of("example.db"));
         db.open();
+        db.rawUpdate("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name string, age int, quality string)");
 
-        db.rawUpdate("DROP TABLE IF EXISTS users");
-        db.rawUpdate("CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name string, age int, quality string)");
+//        System.out.println(db.select("users").select(count()).execute().fetchOne(1).asInteger());
 
-        Users users = new Users(db);
-
-        users.insert("Keenan", 19, Quality.WISE);
-        users.insert("Adam", 24, Quality.CLEVER);
-        users.insert("Max", 7, Quality.ATHLETIC);
-        users.insert("Max", 1, Quality.FUNNY);
-
-        db.insert("users").select(users.all().select(Users.NAME, Users.AGE, Users.QUALITY)).execute();
+//        time(() -> {
+//            return db.select("users").execute().stream()
+//                    .mapToInt(Users.AGE::mapNonNull)
+//                    .sum();
+//        });
 
 
+        Select select = db.select("users").select(sum("age"));
+
+        try (Stream<Record> stream = select.execute().stream()) {
+
+        }
+    }
+
+    private void time(Supplier<Object> func) {
+        long start = System.nanoTime();
+        Object result = func.get();
+        long end = System.nanoTime();
+
+        long diff = TimeUnit.MILLISECONDS.convert(end - start, TimeUnit.NANOSECONDS);
+        System.out.println(result);
+        System.out.println("it took " + diff + " ms");
     }
 }

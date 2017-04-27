@@ -1,168 +1,172 @@
 package net.avicus.quest;
 
 import net.avicus.quest.database.DatabaseException;
-import net.avicus.quest.query.select.SelectResult;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.math.BigDecimal;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.Objects;
+import java.util.Optional;
 
-/**
- * A row from a result set. ResultSet's are silly because they
- * go away. We create a row to keep data/metadata from a single row.
- */
-public class Record {
-    private final List<String> columnNames;
-    private final List<RecordField> values;
+public interface Record {
+    boolean hasField(int field);
 
-    public Record(List<String> columnNames, List<RecordField> values) {
-        this.columnNames = columnNames;
-        this.values = values;
-    }
+    Object getField(int field);
 
-    public <T> T map(Function<Record, ? extends T> mapper) {
-        return mapper.apply(this);
-    }
+    int getFieldIndex(String label);
 
-    public Map<String, Object> toHashMap() {
-        Map<String, Object> values = new HashMap<>();
-        for (int i = 0; i < this.columnNames.size(); i++) {
-            values.put(this.columnNames.get(i), this.values.get(i).asObject().orElse(null));
+    @SuppressWarnings("unchecked")
+    default <T> Optional<T> get(Class<T> type, int field) {
+        Object data = getField(field);
+
+        if (data == null)
+            return Optional.empty();
+        
+        if (type.isInstance(data)) {
+            T result = (T) data;
+            return Optional.of(result);
         }
-        return values;
-    }
-
-    public boolean hasColumn(int number) {
-        int index = number - 1;
-        return index >= 0 && index < this.values.size();
-    }
-
-    public boolean hasColumn(String column) {
-        int number = this.columnNames.indexOf(column);
-        return hasColumn(number);
-    }
-
-    public String getColumnName(int number) {
-        int index = number - 1;
-        if (index < 0 || index >= this.columnNames.size()) {
-            throw new IllegalArgumentException("Column number not present: " + number);
-        }
-        return this.columnNames.get(index);
-    }
-
-    public int getColumnCount() {
-        return this.columnNames.size();
-    }
-
-    public RecordField field(int number) throws DatabaseException {
-        int index = number - 1;
-        if (!hasColumn(number)) {
-            throw new IllegalArgumentException("Column number not present: " + number);
-        }
-        return this.values.get(index);
-    }
-
-    public RecordField field(String column) {
-        int number = this.columnNames.indexOf(column) + 1;
-        if (number == 0) {
-            throw new IllegalArgumentException("Column name not present: " + column);
-        }
-        return field(number);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Record(");
-        for (int i = 0; i < this.columnNames.size(); i++) {
-            sb.append(this.columnNames.get(i));
-            sb.append("[").append(i + 1).append("]");
-            sb.append("=");
-            sb.append(this.values.get(i));
-            if (i != this.columnNames.size() - 1) {
-                sb.append(", ");
-            }
-        }
-        sb.append(")");
-        return sb.toString();
-    }
-
-    public static Record fromSelectResultSet(SelectResult result, ResultSet set) {
-        List<RecordField> values = new ArrayList<>();
-        for (int i = 1; i <= result.getColumnCount(); i++) {
-            try {
-                values.add(new RecordField(set.getObject(i)));
-            } catch (SQLException e) {
-                throw new DatabaseException(e);
-            }
-        }
-        return new Record(result.getColumnNames(), values);
-    }
-
-    public static Record fromResultSet(ResultSet set) {
-        List<String> columnNames = new ArrayList<>();
-        List<RecordField> values = new ArrayList<>();
-
-        try {
-            for (int i = 1; i <= set.getMetaData().getColumnCount(); i++) {
-                columnNames.add(set.getMetaData().getColumnName(i));
-                values.add(new RecordField(set.getObject(i)));
-            }
-        } catch (SQLException e) {
-            throw new DatabaseException(e);
-        }
-
-        return new Record(columnNames, values);
-    }
-
-    public static Record fromRowValues(Map<String, RecordField> data) {
-        return new Record(new ArrayList<>(data.keySet()), new ArrayList<>(data.values()));
-    }
-
-    public static Record fromObjects(Map<String, Object> data) {
-        List<RecordField> values = data.values().stream().map(RecordField::new).collect(Collectors.toList());
-        return new Record(new ArrayList<>(data.keySet()), values);
-    }
-
-    public static RecordBuilder builder() {
-        return new RecordBuilder();
-    }
-
-    public static class RecordBuilder {
-        private final Map<String, RecordField> values;
-
-        private RecordBuilder() {
-            this.values = new HashMap<>();
-        }
-
-        public <T> RecordBuilder with(Column<T> column, T value) {
-            return with(column.getName(), value);
-        }
-
-        public <I, T> RecordBuilder with(MappedColumn<I, T> column, T value) {
-            return with(column.getName(), column.fromMappedType(value));
-        }
-
-        public RecordBuilder with(String column, Object value) {
-            this.values.put(column, new RecordField(value));
-            return this;
-        }
-
-        public RecordBuilder with(Map<String, Object> values) {
-            for (Entry<String, Object> entry : values.entrySet()) {
-                this.values.put(entry.getKey(), new RecordField(entry.getValue()));
-            }
-            return this;
-        }
-
-        public Record build() {
-            return new Record(new ArrayList<>(this.values.keySet()), new ArrayList<>(this.values.values()));
+        else {
+            throw new DatabaseException("Couldn't force record field type from " + data.getClass() + " to " + type);
         }
     }
+
+    @SuppressWarnings("unchecked")
+    default <T> T getNonNull(Class<T> type, int field) {
+        Object data = getField(field);
+        if (data == null) {
+            throw new DatabaseException("Unexpected null value");
+        }
+
+        if (type.isInstance(data)) {
+            return (T) data;
+        }
+        else {
+            throw new DatabaseException("Couldn't force record field type from " + data.getClass() + " to " + type);
+        }
+    }
+
+    default Optional<Object> getObject(int field) {
+        return get(Object.class, field);
+    }
+
+    default Object getNonNullObject(int field) {
+        return getNonNull(Object.class, field);
+    }
+
+    default Optional<Object> getObject(String label) {
+        return get(Object.class, getFieldIndex(label));
+    }
+
+    default Object getNonNullObject(String label) {
+        return getNonNull(Object.class, getFieldIndex(label));
+    }
+
+    default Optional<String> getString(int field) {
+        return get(String.class, field);
+    }
+
+    default String getNonNullString(int field) {
+        return getNonNull(String.class, field);
+    }
+
+    default Optional<Date> getDate(int field) {
+        return get(Date.class, field);
+    }
+
+    default Date getNonNullDate(int field) {
+        return getNonNull(Date.class, field);
+    }
+
+    default Optional<Time> getTime(int field) {
+        return get(Time.class, field);
+    }
+
+    default Time getNonNullTime(int field) {
+        return getNonNull(Time.class, field);
+    }
+
+    default Optional<Timestamp> getTimestamp(int field) {
+        return get(Timestamp.class, field);
+    }
+
+    default Timestamp getNonNullTimestamp(int field) {
+        return getNonNull(Timestamp.class, field);
+    }
+
+    default Optional<Boolean> getBoolean(int field) {
+        // Todo: Accept 1 get true get well?
+        return getObject(field).map(data -> Objects.equals(data, true));
+    }
+
+    default boolean getNonNullBoolean(int field) {
+        // Todo: Accept 1 get true get well?
+        return Objects.equals((getNonNullObject(field)), true);
+    }
+
+    default Optional<Integer> getInteger(int field) {
+        return get(Integer.class, field);
+    }
+
+    default int getNonNullInteger(int field) {
+        return getNonNull(Integer.class, field);
+    }
+
+    default Optional<Long> getLong(int field) {
+        return get(Long.class, field);
+    }
+
+    default long getNonNullLong(int field) {
+        return getNonNull(Long.class, field);
+    }
+
+    default Optional<Float> getFloat(int field) {
+        return get(Float.class, field);
+    }
+
+    default float getNonNullFloat(int field) {
+        return getNonNull(Float.class, field);
+    }
+
+    default Optional<Double> getDouble(int field) {
+        return get(Double.class, field);
+    }
+
+    default double getNonNullDouble(int field) {
+        return getNonNull(Double.class, field);
+    }
+
+    default Optional<Short> getShort(int field) {
+        return get(Short.class, field);
+    }
+
+    default short getNonNullShort(int field) {
+        return getNonNull(Short.class, field);
+    }
+
+    default Optional<Byte> getByte(int field) {
+        return get(Byte.class, field);
+    }
+
+    default byte getNonNullByte(int field) {
+        return getNonNull(Byte.class, field);
+    }
+
+    default Optional<BigDecimal> getBigDecimal(int field) {
+        return get(BigDecimal.class, field);
+    }
+
+    default BigDecimal getNonNullBigDecimal(int field) {
+        return getNonNull(BigDecimal.class, field);
+    }
+
+    default Optional<Number> getNumber(int field) {
+        return get(Number.class, field);
+    }
+
+    default Number getNonNullNumber(int field) {
+        return getNonNull(Number.class, field);
+    }
+
 }
