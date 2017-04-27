@@ -46,13 +46,13 @@ public class MappedColumn<I, T> extends Column<T> {
     @SuppressWarnings("unchecked")
     @Override
     public Optional<T> map(Record field) {
-        return field.getObject(name).map(obj -> toMappedType((I) obj));
+        return field.get(name).map(obj -> toMappedType((I) obj));
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public T mapNonNull(Record field) {
-        return mapper.apply((I) field.getNonNullObject(name));
+        return mapper.apply((I) field.getNonNull(name));
     }
 
     public static <I, T> MappedColumn<I, T> of(String name, Class<I> sqlType, Class<T> mappedType, Function<I, T> mapper, Function<T, I> reverse) {

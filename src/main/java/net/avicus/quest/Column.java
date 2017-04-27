@@ -20,12 +20,12 @@ public class Column<T> extends FieldParam {
 
     @SuppressWarnings("unchecked")
     public Optional<T> map(Record field) {
-        return field.getObject(name).map(obj -> (T) obj);
+        return field.get(name).map(obj -> (T) obj);
     }
 
     @SuppressWarnings("unchecked")
     public T mapNonNull(Record field) {
-        return (T) field.getNonNullObject(name);
+        return (T) field.getNonNull(name);
     }
 
     public String getName() {

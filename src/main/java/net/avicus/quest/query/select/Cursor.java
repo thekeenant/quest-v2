@@ -26,7 +26,6 @@ public class Cursor implements AutoCloseable, Record, Iterable<Record> {
 
     @Override
     public void close() {
-        System.out.println("Closing...");
         try {
             resultSet.close();
             statement.close();
