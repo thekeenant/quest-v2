@@ -2,17 +2,26 @@ package net.avicus.quest.query.select;
 
 import net.avicus.quest.Record;
 import net.avicus.quest.database.DatabaseException;
+import net.avicus.quest.util.Streamable;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class Cursor implements AutoCloseable, Record, Iterable<Record> {
-    private final TempRecord tempRecord = new TempRecord();
+/**
+ * Lazily retrieve records from a {@link ResultSet}.
+ *
+ * It should be manually closed after usage with {@link Cursor#close()} or automatically
+ * closed by using try-with-resources.
+ */
 
+public class Cursor extends Record implements Iterable<Cursor>, Streamable<Cursor>, AutoCloseable {
     private final Statement statement;
     private final ResultSet resultSet;
 
@@ -25,17 +34,7 @@ public class Cursor implements AutoCloseable, Record, Iterable<Record> {
     }
 
     @Override
-    public void close() {
-        try {
-            resultSet.close();
-            statement.close();
-        } catch (Exception e) {
-            throw new DatabaseException(e);
-        }
-    }
-
-    @Override
-    public boolean hasField(int field) {
+    protected boolean hasField(int field) {
         try {
             return field >= 1 && field <= resultSet.getMetaData().getColumnCount();
         } catch (SQLException e) {
@@ -44,9 +43,7 @@ public class Cursor implements AutoCloseable, Record, Iterable<Record> {
     }
 
     @Override
-    public Object getField(int field) {
-        ensureValid();
-
+    protected Object getField(int field) {
         try {
             return resultSet.getObject(field);
         } catch (SQLException e) {
@@ -55,7 +52,7 @@ public class Cursor implements AutoCloseable, Record, Iterable<Record> {
     }
 
     @Override
-    public int getFieldIndex(String label) {
+    protected int getFieldIndex(String label) {
         try {
             for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
                 String curr = resultSet.getMetaData().getColumnLabel(i);
@@ -63,16 +60,25 @@ public class Cursor implements AutoCloseable, Record, Iterable<Record> {
                     return i;
                 }
             }
-            throw new DatabaseException("Label \"" + label + "\" not found");
+            throw new IllegalArgumentException("Label \"" + label + "\" not found");
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
     }
 
+    /**
+     * Advance the cursor by one.
+     * @return If a record exists after advancing the cursor.
+     */
     public boolean next() {
         return next(false);
     }
 
+    /**
+     * Advance the cursor by one.
+     * @param ignoreInvalid When true, no exception will be thrown if this cursor is invalidated.
+     * @return If a record exists after advancing the cursor.
+     */
     private boolean next(boolean ignoreInvalid) {
         if (!ignoreInvalid) {
             ensureValid();
@@ -87,6 +93,10 @@ public class Cursor implements AutoCloseable, Record, Iterable<Record> {
         }
     }
 
+    /**
+     * Equivalent to {@link #next()}, but it returns the cursor.
+     * @return The cursor.
+     */
     public Cursor moveNext() {
         if (!next()) {
             throw new NoSuchElementException();
@@ -94,76 +104,108 @@ public class Cursor implements AutoCloseable, Record, Iterable<Record> {
         return this;
     }
 
-    public Stream<Record> stream() {
-        Stream<Record> stream = StreamSupport.stream(
-                Spliterators.spliteratorUnknownSize(strictIterator(), Spliterator.ORDERED | Spliterator.NONNULL),
+    /**
+     * Create a stream from the {@link #iterator()}.
+     *
+     * This invalidates other usage of this instance of the {@link Cursor}.
+     *
+     * @return The new stream.
+     */
+    public Stream<Cursor> stream() {
+        Stream<Cursor> stream = StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(iterator(), Spliterator.ORDERED | Spliterator.NONNULL),
                 false);
         return stream.onClose(this::close);
     }
 
-    private Iterator<Record> strictIterator() {
-        ensureValid();
-        ensureNotStarted();
-        return new StrictIterator();
-    }
-
+    /**
+     * Create an iterator to read records from the the result set..
+     *
+     * This invalidates other usage of this instance of the {@link Cursor}.
+     *
+     * @return The new iterator.
+     */
     @Override
-    public Iterator<Record> iterator() {
+    public Iterator<Cursor> iterator() {
         ensureValid();
         ensureNotStarted();
-        return new FlexibleIterator();
+        return new CursorIterator();
     }
 
+    /**
+     * Close the underlying result set and statement in order to safely indicate
+     * they are no longer used objects, making the GC happy.
+     */
+    @Override
+    public void close() {
+        try {
+            resultSet.close();
+            statement.close();
+        } catch (Exception e) {
+            throw new DatabaseException(e);
+        }
+    }
+
+    /**
+     * Invalidate the cursor.
+     */
     private void invalidate() {
         invalidated = true;
     }
 
+    /**
+     * @throws DatabaseException If the cursor has been invalidated.
+     */
     private void ensureValid() {
         if (invalidated) {
             throw new DatabaseException("Cursor was delegated to a different interface, and thus is invalidated");
         }
     }
 
+    /**
+     * @throws DatabaseException If the cursor has been advanced (started).
+     */
     private void ensureNotStarted() {
         if (started) {
             throw new DatabaseException("Cursor not at start, it cannot be iterated upon");
         }
     }
 
-    private Object[] createFieldArray() {
-        try {
-            Object[] current = new Object[resultSet.getMetaData().getColumnCount()];
-            for (int i = 0; i < current.length; i++) {
-                current[i] = resultSet.getObject(i + 1);
-            }
-            return current;
-        } catch (SQLException e) {
-            throw new DatabaseException(e);
-        }
+    @Override
+    public String toString() {
+        return "Cursor(started=" + started + ", invalidated=" + invalidated + ")";
     }
 
-    private class StrictIterator implements Iterator<Record> {
+    /**
+     * Iterates the cursor by advancing it each time {@link #hasNext()} is called. Records
+     * are lost if {@link #hasNext()} is called more once before {@link #next()}
+     * is retrieved, because of the way streaming result sets work.
+     */
+    private class CursorIterator implements Iterator<Cursor> {
         private boolean hasNext;
+        private boolean nextUsed = true;
 
-        public StrictIterator() {
+        private CursorIterator() {
             invalidate();
         }
 
         @Override
         public boolean hasNext() {
-            hasNext = Cursor.this.next(true);
-            if (hasNext) {
-                tempRecord.fields = createFieldArray();
+            if (!nextUsed) {
+                throw new IllegalStateException("next() should be called following every hasNext() call");
             }
+            hasNext = Cursor.this.next(true);
+            nextUsed = false;
             return hasNext;
         }
 
         @Override
-        public Record next() {
+        public Cursor next() {
             if (!hasNext) {
                 throw new NoSuchElementException();
             }
-            return tempRecord;
+            nextUsed = true;
+            return Cursor.this;
         }
 
         @Override
@@ -173,54 +215,6 @@ public class Cursor implements AutoCloseable, Record, Iterable<Record> {
             } catch (SQLException e) {
                 throw new DatabaseException(e);
             }
-        }
-    }
-
-    private class FlexibleIterator implements Iterator<Record> {
-        private final Queue<Object[]> queue = new ArrayDeque<>();
-
-        public FlexibleIterator() {
-            invalidate();
-        }
-
-        private void doNext() {
-            boolean hasNext = Cursor.this.next(true);
-
-            if (hasNext) {
-                queue.add(createFieldArray());
-            }
-        }
-
-        @Override
-        public boolean hasNext() {
-            doNext();
-            return !queue.isEmpty();
-        }
-
-        @Override
-        public Record next() {
-            doNext();
-            tempRecord.fields = queue.remove();
-            return tempRecord;
-        }
-    }
-
-    private class TempRecord implements Record {
-        private Object[] fields;
-
-        @Override
-        public boolean hasField(int field) {
-            return Cursor.this.hasField(field);
-        }
-
-        @Override
-        public Object getField(int field) {
-            return fields[field - 1];
-        }
-
-        @Override
-        public int getFieldIndex(String label) {
-            return Cursor.this.getFieldIndex(label);
         }
     }
 }

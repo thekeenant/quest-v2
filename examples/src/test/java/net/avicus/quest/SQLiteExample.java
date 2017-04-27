@@ -2,6 +2,7 @@ package net.avicus.quest;
 
 import net.avicus.quest.database.Database;
 import net.avicus.quest.database.SQLiteUrl;
+import net.avicus.quest.query.select.Cursor;
 import net.avicus.quest.query.select.Select;
 import org.junit.Test;
 
@@ -29,9 +30,11 @@ public class SQLiteExample {
 
         Select select = db.select("users").select(sum("age"));
 
-        try (Stream<Record> stream = select.execute().stream()) {
-            stream.mapToInt(rec -> rec.getNonNull(1, int.class)).forEach(System.out::println);
-        }
+        time(() -> {
+            try (Stream<Cursor> stream = select.fetchLazy().stream()) {
+                return stream.mapToInt(rec -> rec.getNonNull(1, int.class)).sum();
+            }
+        });
     }
 
     private void time(Supplier<Object> func) {

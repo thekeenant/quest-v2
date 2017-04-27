@@ -10,15 +10,15 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 
-public interface Record {
-    boolean hasField(int field);
+public abstract class Record {
+    protected abstract boolean hasField(int field);
 
-    Object getField(int field);
+    protected abstract Object getField(int field);
 
-    int getFieldIndex(String label);
+    protected abstract int getFieldIndex(String label);
 
     @SuppressWarnings("unchecked")
-    default <T> Optional<T> get(int field, Class<T> cast) {
+    public <T> Optional<T> get(int field, Class<T> cast) {
         Object data = getField(field);
 
         if (data == null)
@@ -39,7 +39,7 @@ public interface Record {
     }
 
     @SuppressWarnings("unchecked")
-    default <T> T getNonNull(int field, Class<T> cast) {
+    public <T> T getNonNull(int field, Class<T> cast) {
         Object data = getField(field);
         if (data == null) {
             throw new DatabaseException("Unexpected null value");
@@ -58,125 +58,125 @@ public interface Record {
         }
     }
 
-    default Optional<Object> get(int field) {
+    public Optional<Object> get(int field) {
         return get(field, Object.class);
     }
 
-    default Optional<Object> get(String label) {
+    public Optional<Object> get(String label) {
         return get(getFieldIndex(label), Object.class);
     }
 
-    default Object getNonNull(int field) {
+    public Object getNonNull(int field) {
         return getNonNull(field, Object.class);
     }
 
-    default Object getNonNull(String label) {
+    public Object getNonNull(String label) {
         return getNonNull(getFieldIndex(label), Object.class);
     }
 
-    default Optional<String> getString(int field) {
+    public Optional<String> getString(int field) {
         return get(field, String.class);
     }
 
-    default String getNonNullString(int field) {
+    public String getNonNullString(int field) {
         return getNonNull(field, String.class);
     }
 
-    default Optional<Date> getDate(int field) {
+    public Optional<Date> getDate(int field) {
         return get(field, Date.class);
     }
 
-    default Date getNonNullDate(int field) {
+    public Date getNonNullDate(int field) {
         return getNonNull(field, Date.class);
     }
 
-    default Optional<Time> getTime(int field) {
+    public Optional<Time> getTime(int field) {
         return get(field, Time.class);
     }
 
-    default Time getNonNullTime(int field) {
+    public Time getNonNullTime(int field) {
         return getNonNull(field, Time.class);
     }
 
-    default Optional<Timestamp> getTimestamp(int field) {
+    public Optional<Timestamp> getTimestamp(int field) {
         return get(field, Timestamp.class);
     }
 
-    default Timestamp getNonNullTimestamp(int field) {
+    public Timestamp getNonNullTimestamp(int field) {
         return getNonNull(field, Timestamp.class);
     }
 
-    default Optional<Boolean> getBoolean(int field) {
+    public Optional<Boolean> getBoolean(int field) {
         // Todo: Accept 1 get true get well?
         return get(field).map(data -> Objects.equals(data, true));
     }
 
-    default boolean getNonNullBoolean(int field) {
+    public boolean getNonNullBoolean(int field) {
         // Todo: Accept 1 get true get well?
         return Objects.equals((getNonNull(field)), true);
     }
 
-    default Optional<Integer> getInt(int field) {
+    public Optional<Integer> getInt(int field) {
         return get(field, Integer.class);
     }
 
-    default int getNonNullInt(int field) {
+    public int getNonNullInt(int field) {
         return getNonNull(field, Integer.class);
     }
 
-    default Optional<Long> getLong(int field) {
+    public Optional<Long> getLong(int field) {
         return get(field, Long.class);
     }
 
-    default long getNonNullLong(int field) {
+    public long getNonNullLong(int field) {
         return getNonNull(field, Long.class);
     }
 
-    default Optional<Float> getFloat(int field) {
+    public Optional<Float> getFloat(int field) {
         return get(field, Float.class);
     }
 
-    default float getNonNullFloat(int field) {
+    public float getNonNullFloat(int field) {
         return getNonNull(field, Float.class);
     }
 
-    default Optional<Double> getDouble(int field) {
+    public Optional<Double> getDouble(int field) {
         return get(field, Double.class);
     }
 
-    default double getNonNullDouble(int field) {
+    public double getNonNullDouble(int field) {
         return getNonNull(field, Double.class);
     }
 
-    default Optional<Short> getShort(int field) {
+    public Optional<Short> getShort(int field) {
         return get(field, Short.class);
     }
 
-    default short getNonNullShort(int field) {
+    public short getNonNullShort(int field) {
         return getNonNull(field, Short.class);
     }
 
-    default Optional<Byte> getByte(int field) {
+    public Optional<Byte> getByte(int field) {
         return get(field, Byte.class);
     }
 
-    default byte getNonNullByte(int field) {
+    public byte getNonNullByte(int field) {
         return getNonNull(field, Byte.class);
     }
 
-    default Optional<BigDecimal> getBigDecimal(int field) {
+    public Optional<BigDecimal> getBigDecimal(int field) {
         return get(field, BigDecimal.class);
     }
 
-    default BigDecimal getNonNullBigDecimal(int field) {
+    public BigDecimal getNonNullBigDecimal(int field) {
         return getNonNull(field, BigDecimal.class);
     }
 
-    default Optional<Number> getNum(int field) {
+    public Optional<Number> getNum(int field) {
         return get(field, Number.class);
     }
 
-    default Number getNonNullNum(int field) {
+    public Number getNonNullNum(int field) {
         return getNonNull(field, Number.class);
     }
 

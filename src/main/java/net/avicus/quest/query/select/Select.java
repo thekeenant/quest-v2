@@ -12,6 +12,7 @@ import net.avicus.quest.query.Filter;
 import net.avicus.quest.query.Filterable;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -194,15 +195,44 @@ public class Select implements Filterable<Select> {
         return new ParameterizedString(sb.toString(), parameters);
     }
 
-    public Cursor execute() throws DatabaseException {
-        return execute(false);
+    public SelectResult fetch(Integer timeout) {
+        PreparedStatement stmt = buildStatement(false, timeout);
+        try (ResultSet results = stmt.executeQuery()) {
+            SelectResult result = new SelectResult(stmt, results);
+            result.populate();
+            return result;
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        } finally {
+            try {
+                stmt.close();
+            } catch (SQLException e) {
+                throw new DatabaseException(e);
+            }
+        }
     }
 
-    public Cursor execute(boolean lazy) throws DatabaseException {
-        return execute(lazy, null);
+    public Cursor fetchLazy() {
+        return fetchLazy(null);
     }
 
-    public Cursor execute(boolean lazy, Integer timeout) throws DatabaseException {
+    public Cursor fetchLazy(Integer timeout) throws DatabaseException {
+        PreparedStatement stmt = buildStatement(true, timeout);
+
+        try (ResultSet results = stmt.executeQuery()) {
+            return new Cursor(stmt, results);
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        } finally {
+            try {
+                stmt.close();
+            } catch (SQLException e) {
+                throw new DatabaseException(e);
+            }
+        }
+    }
+
+    private PreparedStatement buildStatement(boolean lazy, Integer timeout) {
         // The query
         ParameterizedString query = build();
 
@@ -212,11 +242,7 @@ public class Select implements Filterable<Select> {
         // Add variables (?, ?)
         query.apply(statement, 1);
 
-        try {
-            return new Cursor(statement, statement.executeQuery());
-        } catch (SQLException e) {
-            throw new DatabaseException(e);
-        }
+        return statement;
     }
 
     @Override
