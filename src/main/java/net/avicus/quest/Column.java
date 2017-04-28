@@ -8,7 +8,7 @@ import java.util.Optional;
 public class Column<T> extends FieldParam {
     private final String name;
 
-    public Column(String name) {
+    protected Column(String name) {
         super(name);
         this.name = name;
     }
@@ -20,7 +20,7 @@ public class Column<T> extends FieldParam {
 
     @SuppressWarnings("unchecked")
     public Optional<T> map(Record field) {
-        return field.get(name).map(obj -> (T) obj);
+        return Optional.ofNullable((T) field.get(name).orElse(null));
     }
 
     @SuppressWarnings("unchecked")

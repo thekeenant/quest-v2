@@ -2,11 +2,13 @@ package net.avicus.quest.parameter;
 
 import net.avicus.quest.Param;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class NullParam implements Param {
     public static final NullParam INSTANCE = new NullParam();
+    private static final List<Object> VALUES = Collections.singletonList(NULL);
 
     private NullParam() {
 
@@ -14,11 +16,11 @@ public class NullParam implements Param {
 
     @Override
     public String getParamString() {
-        return "NULL";
+        return "?";
     }
 
     public List<Object> getValues() {
-        return Collections.emptyList();
+        return VALUES;
     }
 
     @Override

@@ -7,30 +7,49 @@ import net.avicus.quest.util.Streamable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Lazily retrieve records from a {@link ResultSet}.
+ * Retrieve records from a {@link ResultSet}, one-by-one.
  *
  * It should be manually closed after usage with {@link Cursor#close()} or automatically
  * closed by using try-with-resources.
+ *
+ * Note: This is not the typical usage of {@link Iterable}... The the iterator points to itself. Upon
+ * each call to {@link Iterator#next()}, the cursor advances.
+ *
+ * Note: Only one stream or iterator can be created. Neither can be created after the cursor has
+ * been advanced.
  */
-
 public class Cursor extends Record implements Iterable<Cursor>, Streamable<Cursor>, AutoCloseable {
-    private final Statement statement;
     private final ResultSet resultSet;
+    private final Statement statement;
+
+    /**
+     * We cache the labels so that repetitive accesses to records via labels is not too costly.
+     */
+    private Map<String, Integer> labels;
 
     private boolean started;
     private boolean invalidated;
 
-    public Cursor(Statement statement, ResultSet resultSet) {
-        this.statement = statement;
+    public Cursor(ResultSet resultSet, Statement statement) {
         this.resultSet = resultSet;
+        this.statement = statement;
+    }
+
+    public boolean isClosed() {
+        try {
+            return resultSet.isClosed();
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
+    }
+
+    public ResultSet getResultSet() {
+        return resultSet;
     }
 
     @Override
@@ -44,6 +63,10 @@ public class Cursor extends Record implements Iterable<Cursor>, Streamable<Curso
 
     @Override
     protected Object getField(int field) {
+        if (!hasField(field)) {
+            throw new NoSuchElementException();
+        }
+
         try {
             return resultSet.getObject(field);
         } catch (SQLException e) {
@@ -53,14 +76,26 @@ public class Cursor extends Record implements Iterable<Cursor>, Streamable<Curso
 
     @Override
     protected int getFieldIndex(String label) {
+        if (labels != null) {
+            Integer index = labels.get(label);
+
+            if (index == null) {
+                throw new NoSuchElementException();
+            }
+
+            return index;
+        }
+
         try {
+            labels = new HashMap<>();
+
             for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
                 String curr = resultSet.getMetaData().getColumnLabel(i);
                 if (label.equals(curr)) {
-                    return i;
+                    labels.put(curr, i);
                 }
             }
-            throw new IllegalArgumentException("Label \"" + label + "\" not found");
+            return getFieldIndex(label);
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -70,8 +105,8 @@ public class Cursor extends Record implements Iterable<Cursor>, Streamable<Curso
      * Advance the cursor by one.
      * @return If a record exists after advancing the cursor.
      */
-    public boolean next() {
-        return next(false);
+    public boolean moveNext() {
+        return moveNext(false);
     }
 
     /**
@@ -79,9 +114,13 @@ public class Cursor extends Record implements Iterable<Cursor>, Streamable<Curso
      * @param ignoreInvalid When true, no exception will be thrown if this cursor is invalidated.
      * @return If a record exists after advancing the cursor.
      */
-    private boolean next(boolean ignoreInvalid) {
+    private boolean moveNext(boolean ignoreInvalid) {
         if (!ignoreInvalid) {
             ensureValid();
+        }
+
+        if (isClosed()) {
+            throw new DatabaseException("Cursor result set has been closed");
         }
 
         started = true;
@@ -94,11 +133,11 @@ public class Cursor extends Record implements Iterable<Cursor>, Streamable<Curso
     }
 
     /**
-     * Equivalent to {@link #next()}, but it returns the cursor.
-     * @return The cursor.
+     * Advance the cursor by one.
+     * @return The cursor itself.
      */
-    public Cursor moveNext() {
-        if (!next()) {
+    public Cursor next() {
+        if (!moveNext()) {
             throw new NoSuchElementException();
         }
         return this;
@@ -106,8 +145,6 @@ public class Cursor extends Record implements Iterable<Cursor>, Streamable<Curso
 
     /**
      * Create a stream from the {@link #iterator()}.
-     *
-     * This invalidates other usage of this instance of the {@link Cursor}.
      *
      * @return The new stream.
      */
@@ -119,9 +156,7 @@ public class Cursor extends Record implements Iterable<Cursor>, Streamable<Curso
     }
 
     /**
-     * Create an iterator to read records from the the result set..
-     *
-     * This invalidates other usage of this instance of the {@link Cursor}.
+     * Create an iterator to read records from the the result set.
      *
      * @return The new iterator.
      */
@@ -156,9 +191,9 @@ public class Cursor extends Record implements Iterable<Cursor>, Streamable<Curso
     /**
      * @throws DatabaseException If the cursor has been invalidated.
      */
-    private void ensureValid() {
+    protected void ensureValid() {
         if (invalidated) {
-            throw new DatabaseException("Cursor was delegated to a different interface, and thus is invalidated");
+            throw new DatabaseException("Cursor was delegated to a stream or iterator, and thus is invalidated");
         }
     }
 
@@ -177,12 +212,17 @@ public class Cursor extends Record implements Iterable<Cursor>, Streamable<Curso
     }
 
     /**
-     * Iterates the cursor by advancing it each time {@link #hasNext()} is called. Records
-     * are lost if {@link #hasNext()} is called more once before {@link #next()}
-     * is retrieved, because of the way streaming result sets work.
+     * Iterates the cursor by advancing it each time {@link #next()} is called.
      */
     private class CursorIterator implements Iterator<Cursor> {
+        /**
+         * Indicates if there exists a record which {@link #next()} will return.
+         */
         private boolean hasNext;
+
+        /**
+         * Indicates if {@link #next()} has been called already on the current record.
+         */
         private boolean nextUsed = true;
 
         private CursorIterator() {
@@ -191,30 +231,40 @@ public class Cursor extends Record implements Iterable<Cursor>, Streamable<Curso
 
         @Override
         public boolean hasNext() {
+            // Condition passes if hasNext() returned true, and a new record was found, and next() hasn't been called
             if (!nextUsed) {
-                throw new IllegalStateException("next() should be called following every hasNext() call");
+                // Therefore, next() points to a record so hasNext() returns true.
+                return true;
             }
-            hasNext = Cursor.this.next(true);
-            nextUsed = false;
+
+            // Advance the cursor and store whether or not the next record exists
+            hasNext = Cursor.this.moveNext(true);
+
+            // If it does, indicate that next() hasn't been called, and should be called, in
+            // order to advance the cursor to the next record.
+            if (hasNext) {
+                nextUsed = false;
+            }
+
             return hasNext;
         }
 
         @Override
         public Cursor next() {
+            // next() was already called once on this record, advance the record
+            if (nextUsed) {
+                hasNext = hasNext();
+            }
+
+            // Check if we are all done
             if (!hasNext) {
                 throw new NoSuchElementException();
             }
-            nextUsed = true;
-            return Cursor.this;
-        }
 
-        @Override
-        public void remove() {
-            try {
-                resultSet.deleteRow();
-            } catch (SQLException e) {
-                throw new DatabaseException(e);
-            }
+            // indicate that next() has been called on this record
+            nextUsed = true;
+
+            return Cursor.this;
         }
     }
 }

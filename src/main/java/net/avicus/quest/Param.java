@@ -8,6 +8,8 @@ import net.avicus.quest.query.Filter;
 import java.util.List;
 
 public interface Param {
+    NullParam NULL = NullParam.INSTANCE;
+
     /**
      * Get this parameter's raw parameterized SQL string.
      *

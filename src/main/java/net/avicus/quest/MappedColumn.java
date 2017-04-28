@@ -12,7 +12,7 @@ public class MappedColumn<I, T> extends Column<T> {
     private final Class<I> sqlType;
     private final Class<T> mappedType;
 
-    public MappedColumn(String name, Class<I> sqlType, Class<T> mappedType, Function<I, T> mapper, Function<T, I> reverse) {
+    protected MappedColumn(String name, Class<I> sqlType, Class<T> mappedType, Function<I, T> mapper, Function<T, I> reverse) {
         super(name);
         this.name = name;
         this.sqlType = sqlType;

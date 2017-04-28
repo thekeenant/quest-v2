@@ -1,42 +1,30 @@
 package net.avicus.quest.query.insert;
 
-import net.avicus.quest.Record;
 import net.avicus.quest.database.DatabaseException;
+import net.avicus.quest.query.select.EagerCursor;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Optional;
+import java.sql.Statement;
 
-public class InsertResult {
-    private final int result;
-    private final Record generated;
+public class InsertResult implements AutoCloseable {
+    private ResultSet resultSet;
+    private final Statement statement;
 
-    public InsertResult(int result, Record generated) {
-        this.result = result;
-        this.generated = generated;
+    public InsertResult(ResultSet resultSet, Statement statement) {
+        this.resultSet = resultSet;
+        this.statement = statement;
     }
 
-    public int getResult() {
-        return result;
+    public EagerCursor getGenerated() {
+        return new EagerCursor(resultSet, null);
     }
 
-    public Optional<Record> getGenerated() {
-        return Optional.ofNullable(this.generated);
-    }
-
-    public static InsertResult execute(PreparedStatement statement) throws DatabaseException {
+    @Override
+    public void close() {
         try {
-            int result = statement.executeUpdate();
-            Record generated = null;
-            ResultSet set = statement.getGeneratedKeys();
-            if (set != null) {
-                set.next();
-                // Todo:
-//                generated = Optional.of(Record.fromResultSet(set));
-            }
-            return new InsertResult(result, generated);
-        } catch (SQLException e) {
+            resultSet.close();
+            statement.close();
+        } catch (Exception e) {
             throw new DatabaseException(e);
         }
     }

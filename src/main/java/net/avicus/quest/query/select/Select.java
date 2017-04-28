@@ -195,20 +195,17 @@ public class Select implements Filterable<Select> {
         return new ParameterizedString(sb.toString(), parameters);
     }
 
-    public SelectResult fetch(Integer timeout) {
-        PreparedStatement stmt = buildStatement(false, timeout);
-        try (ResultSet results = stmt.executeQuery()) {
-            SelectResult result = new SelectResult(stmt, results);
-            result.populate();
-            return result;
+    public EagerCursor fetch() {
+        return fetch(null);
+    }
+
+    public EagerCursor fetch(Integer timeout) throws DatabaseException {
+        try {
+            PreparedStatement stmt = buildStatement(false, timeout);
+            ResultSet results = stmt.executeQuery();
+            return new EagerCursor(results, stmt);
         } catch (SQLException e) {
             throw new DatabaseException(e);
-        } finally {
-            try {
-                stmt.close();
-            } catch (SQLException e) {
-                throw new DatabaseException(e);
-            }
         }
     }
 
@@ -217,18 +214,12 @@ public class Select implements Filterable<Select> {
     }
 
     public Cursor fetchLazy(Integer timeout) throws DatabaseException {
-        PreparedStatement stmt = buildStatement(true, timeout);
-
-        try (ResultSet results = stmt.executeQuery()) {
-            return new Cursor(stmt, results);
+        try {
+            PreparedStatement stmt = buildStatement(true, timeout);
+            ResultSet results = stmt.executeQuery();
+            return new EagerCursor(results, stmt);
         } catch (SQLException e) {
             throw new DatabaseException(e);
-        } finally {
-            try {
-                stmt.close();
-            } catch (SQLException e) {
-                throw new DatabaseException(e);
-            }
         }
     }
 
